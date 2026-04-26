@@ -1,0 +1,1727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AGCA — Campaign Tracker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@200;300;400;600&display=swap');
+
+  :root {
+    --bg:        #0a0c10;
+    --surface:   #111620;
+    --surface2:  #181f2e;
+    --surface3:  #1e2840;
+    --border:    #2a3550;
+    --border2:   #3a4a6a;
+    --teal:      #4fc3c8;
+    --teal-dim:  #2a7a7e;
+    --amber:     #e8a830;
+    --amber-dim: #7a5510;
+    --red:       #e84040;
+    --red-dim:   #5a1818;
+    --green:     #50c878;
+    --green-dim: #1a4a28;
+    --purple:    #9b6bff;
+    --purple-dim:#3a1a7a;
+    --text:      #c8d8f0;
+    --text-dim:  #5a7090;
+    --text-mid:  #8aa0c0;
+    --vanguard:  #e8a830;
+    --field:     #4fc3c8;
+    --proving:   #9b6bff;
+    --floor:     #e84040;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Exo 2', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* HEADER */
+  #header {
+    position: sticky; top: 0; z-index: 100;
+    background: linear-gradient(180deg, var(--bg) 0%, rgba(10,12,16,0.95) 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex; align-items: center; gap: 16px;
+    backdrop-filter: blur(8px);
+  }
+
+  #header h1 {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 22px; font-weight: 700;
+    letter-spacing: 4px; text-transform: uppercase;
+    color: var(--teal);
+  }
+
+  .header-divider { width: 1px; height: 32px; background: var(--border); }
+
+  .week-control { display: flex; align-items: center; gap: 8px; }
+  .week-control label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px; color: var(--text-dim);
+    letter-spacing: 2px; text-transform: uppercase;
+  }
+  .week-display {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 28px; font-weight: 700;
+    color: var(--amber); line-height: 1;
+    min-width: 40px; text-align: center;
+  }
+
+  .nav-link {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 12px; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase;
+    padding: 5px 12px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: all 0.15s;
+    cursor: pointer;
+    background: var(--surface2);
+  }
+  .nav-link:hover { color: var(--teal); border-color: var(--teal-dim); background: rgba(79,195,200,0.08); }
+
+  .tournament-badge {
+    display: none;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px; letter-spacing: 2px;
+    color: var(--amber);
+    background: rgba(232,168,48,0.1);
+    border: 1px solid var(--amber-dim);
+    padding: 4px 10px; border-radius: 2px;
+  }
+  .tournament-badge.active { display: block; }
+
+  .header-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+
+  .btn {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase;
+    padding: 6px 14px;
+    border: 1px solid var(--border2);
+    background: var(--surface2);
+    color: var(--text-mid);
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.15s;
+  }
+  .btn:hover { border-color: var(--teal); color: var(--teal); background: rgba(79,195,200,0.08); }
+  .btn.primary { border-color: var(--teal-dim); background: rgba(79,195,200,0.12); color: var(--teal); }
+  .btn.primary:hover { background: rgba(79,195,200,0.22); }
+  .btn.danger { border-color: var(--red-dim); color: var(--red); background: rgba(232,64,64,0.08); }
+  .btn.danger:hover { background: rgba(232,64,64,0.18); }
+  .btn.small { font-size: 11px; padding: 4px 8px; }
+  .btn.amber { border-color: var(--amber-dim); color: var(--amber); background: rgba(232,168,48,0.08); }
+  .btn.amber:hover { background: rgba(232,168,48,0.18); }
+  .btn.green { border-color: var(--green-dim); color: var(--green); background: rgba(80,200,120,0.08); }
+  .btn.green:hover { background: rgba(80,200,120,0.18); }
+
+  /* APP LAYOUT */
+  #app {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    height: calc(100vh - 57px);
+  }
+
+  /* PAGE SYSTEM */
+  .page { display: none; height: 100%; overflow-y: auto; }
+  .page.active { display: flex; flex-direction: column; }
+
+  /* LADDER PANEL */
+  #ladder-panel {
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    background: var(--surface);
+    height: 100%;
+  }
+
+  .panel-header {
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; background: var(--surface); z-index: 5;
+  }
+
+  .panel-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: 3px; text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .tier-section { border-bottom: 1px solid var(--border); }
+
+  .tier-label {
+    padding: 6px 16px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .tier-label .tier-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .tier-label.vanguard { color: var(--vanguard); background: rgba(232,168,48,0.06); }
+  .tier-label.vanguard .tier-dot { background: var(--vanguard); }
+  .tier-label.field { color: var(--field); background: rgba(79,195,200,0.06); }
+  .tier-label.field .tier-dot { background: var(--field); }
+  .tier-label.proving { color: var(--proving); background: rgba(155,107,255,0.06); }
+  .tier-label.proving .tier-dot { background: var(--proving); }
+  .tier-label.floor { color: var(--floor); background: rgba(232,64,64,0.06); }
+  .tier-label.floor .tier-dot { background: var(--floor); }
+
+  .team-row {
+    padding: 10px 16px;
+    display: flex; align-items: center; gap: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(42,53,80,0.5);
+    transition: background 0.12s;
+    position: relative;
+  }
+  .team-row:hover { background: var(--surface2); }
+  .team-row.selected { background: var(--surface3); }
+  .team-row.selected::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px; background: var(--teal);
+  }
+
+  .rank-num {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 18px; font-weight: 700;
+    color: var(--text-dim);
+    min-width: 28px; text-align: right; line-height: 1;
+  }
+
+  .team-info { flex: 1; min-width: 0; }
+  .team-name {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px; font-weight: 600; letter-spacing: 0.5px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .team-score {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px; color: var(--text-dim); margin-top: 2px;
+  }
+
+  .score-bar { width: 50px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; flex-shrink: 0; }
+  .score-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+
+  .tier-vanguard .team-name { color: var(--vanguard); }
+  .tier-field .team-name { color: var(--teal); }
+  .tier-proving .team-name { color: var(--purple); }
+  .tier-floor .team-name { color: var(--floor); }
+
+  .flag-indicator { display: flex; gap: 2px; }
+  .flag-dot { width: 5px; height: 5px; border-radius: 50%; }
+
+  /* MAIN CONTENT */
+  #main-content {
+    overflow-y: auto;
+    background: var(--bg);
+    display: flex; flex-direction: column;
+  }
+
+  /* TABS */
+  .tab-bar {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky; top: 0; z-index: 10;
+    flex-shrink: 0;
+  }
+  .tab {
+    padding: 12px 18px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px; font-weight: 600;
+    letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text-dim); cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s; margin-bottom: -1px;
+  }
+  .tab:hover { color: var(--text-mid); }
+  .tab.active { color: var(--teal); border-bottom-color: var(--teal); }
+
+  /* EMPTY STATE */
+  #empty-state {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    flex: 1; color: var(--text-dim); gap: 12px;
+  }
+  .empty-icon { font-size: 48px; opacity: 0.3; }
+  .empty-text {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px; letter-spacing: 2px;
+    text-transform: uppercase; opacity: 0.5;
+  }
+
+  /* TEAM DETAIL */
+  #team-detail { display: none; }
+
+  .detail-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface); flex-shrink: 0;
+  }
+  .detail-team-name {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 28px; font-weight: 700; letter-spacing: 1px;
+  }
+  .detail-meta {
+    display: flex; gap: 16px; margin-top: 6px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px; color: var(--text-dim);
+  }
+
+  /* SECTIONS */
+  .section { padding: 20px 24px; border-bottom: 1px solid var(--border); }
+  .section-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 12px; font-weight: 700;
+    letter-spacing: 3px; text-transform: uppercase;
+    color: var(--text-dim); margin-bottom: 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* CLOCKS */
+  .clocks-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .clock-item {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 4px; padding: 12px 14px;
+  }
+  .clock-item.full-width { grid-column: 1 / -1; }
+  .clock-name {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim);
+    margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .clock-weight { font-size: 9px; color: var(--text-dim); opacity: 0.6; }
+  .clock-segments { display: flex; gap: 3px; flex-wrap: wrap; }
+  .segment {
+    height: 20px; border-radius: 2px; cursor: pointer;
+    border: 1px solid var(--border2); background: var(--surface3);
+    transition: all 0.1s; flex: 1; min-width: 16px;
+  }
+  .segment:hover { border-color: var(--text-mid); }
+  .segment.filled { border-color: transparent; }
+  .segment.half-filled { border-color: transparent; position: relative; overflow: hidden; }
+  .segment.half-filled::after {
+    content: ''; position: absolute; left: 0; top: 0;
+    width: 50%; height: 100%; background: inherit; filter: brightness(0.5);
+  }
+  .clock-combat .segment.filled { background: var(--red); box-shadow: 0 0 4px rgba(232,64,64,0.3); }
+  .clock-individual .segment.filled { background: var(--teal); box-shadow: 0 0 4px rgba(79,195,200,0.3); }
+  .clock-maintenance .segment.filled { background: var(--amber); box-shadow: 0 0 4px rgba(232,168,48,0.3); }
+  .clock-scholarly .segment.filled { background: var(--purple); box-shadow: 0 0 4px rgba(155,107,255,0.3); }
+  .clock-conduct .segment.filled { background: var(--green); box-shadow: 0 0 4px rgba(80,200,120,0.3); }
+  .clock-combat .segment.half-filled { background: var(--red); }
+  .clock-individual .segment.half-filled { background: var(--teal); }
+  .clock-maintenance .segment.half-filled { background: var(--amber); }
+  .clock-scholarly .segment.half-filled { background: var(--purple); }
+  .clock-conduct .segment.half-filled { background: var(--green); }
+  .clock-score {
+    font-family: 'Rajdhani', sans-serif; font-size: 12px; font-weight: 600;
+    color: var(--text-mid); margin-top: 6px; text-align: right;
+  }
+
+  /* COMPOSITE */
+  .composite-display {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 4px; padding: 16px 20px;
+    display: flex; align-items: center; gap: 20px;
+  }
+  .composite-score { font-family: 'Rajdhani', sans-serif; font-size: 48px; font-weight: 700; line-height: 1; }
+  .composite-breakdown {
+    flex: 1; display: grid; grid-template-columns: 1fr 1fr;
+    gap: 4px 16px; font-family: 'Share Tech Mono', monospace; font-size: 10px;
+  }
+  .breakdown-item { display: flex; align-items: center; justify-content: space-between; color: var(--text-dim); }
+  .breakdown-val { color: var(--text-mid); }
+
+  /* PROJECT CLOCKS */
+  .project-clock {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 4px; padding: 12px 14px; margin-bottom: 8px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .project-clock-header { display: flex; align-items: center; gap: 8px; }
+  .project-clock-name {
+    flex: 1; font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 600;
+    background: transparent; border: none; outline: none; color: var(--text); cursor: text;
+  }
+  .project-clock-name::placeholder { color: var(--text-dim); }
+  .project-segments-row { display: flex; align-items: center; gap: 8px; }
+  .project-segments { display: flex; gap: 3px; flex: 1; }
+  .project-segment {
+    height: 16px; flex: 1; border-radius: 2px; cursor: pointer;
+    border: 1px solid var(--border2); background: var(--surface3); transition: all 0.1s;
+  }
+  .project-segment.filled { background: var(--purple); border-color: transparent; box-shadow: 0 0 4px rgba(155,107,255,0.3); }
+  .project-segment:hover { border-color: var(--purple); }
+
+  /* CONDUCT FLAGS */
+  .flag-item {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 4px; padding: 10px 14px; margin-bottom: 6px;
+    display: flex; align-items: flex-start; gap: 10px; transition: opacity 0.2s;
+  }
+  .flag-item.expired { opacity: 0.4; }
+  .flag-type-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 3px; flex-shrink: 0; }
+  .flag-positive .flag-type-dot { background: var(--green); }
+  .flag-negative .flag-type-dot { background: var(--red); }
+  .flag-content { flex: 1; min-width: 0; }
+  .flag-desc { font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .flag-meta { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--text-dim); margin-top: 2px; display: flex; gap: 10px; }
+  .flag-week-remaining { color: var(--amber); }
+
+  .add-flag-form { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; margin-top: 8px; align-items: center; }
+  .flag-type-toggle { display: flex; border-radius: 3px; overflow: hidden; border: 1px solid var(--border); }
+  .flag-type-btn {
+    padding: 6px 12px; font-family: 'Rajdhani', sans-serif; font-size: 12px; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase; background: var(--surface2);
+    border: none; cursor: pointer; color: var(--text-dim); transition: all 0.12s;
+  }
+  .flag-type-btn.active-pos { background: var(--green-dim); color: var(--green); }
+  .flag-type-btn.active-neg { background: var(--red-dim); color: var(--red); }
+
+  /* INPUTS */
+  .text-input {
+    flex: 1; font-family: 'Exo 2', sans-serif; font-size: 13px; font-weight: 300;
+    background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+    padding: 6px 10px; border-radius: 3px; outline: none; transition: border-color 0.15s;
+    appearance: none;
+  }
+  .text-input:focus { border-color: var(--teal-dim); }
+  .text-input::placeholder { color: var(--text-dim); }
+
+  .notes-area {
+    width: 100%; min-height: 80px; font-family: 'Exo 2', sans-serif; font-size: 13px; font-weight: 300;
+    background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+    padding: 10px 14px; border-radius: 3px; outline: none; resize: vertical; line-height: 1.5;
+  }
+  .notes-area:focus { border-color: var(--teal-dim); }
+
+  .add-project-form { display: flex; gap: 8px; margin-top: 8px; }
+  .scroll-section { max-height: 300px; overflow-y: auto; }
+  .help-text { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--text-dim); letter-spacing: 1px; margin-top: 4px; }
+
+  /* CHALLENGE */
+  #challenge-tab-content { padding: 20px 24px; }
+  .challenge-form {
+    display: grid; grid-template-columns: 1fr 60px 1fr auto; gap: 8px; align-items: center;
+    margin-bottom: 20px; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+  }
+  .vs-label { font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700; color: var(--text-dim); text-align: center; }
+  .challenge-entry {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+    padding: 12px 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px;
+  }
+  .challenge-week-tag { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--text-dim); letter-spacing: 1px; min-width: 60px; }
+  .challenge-teams { flex: 1; font-family: 'Rajdhani', sans-serif; font-size: 15px; font-weight: 600; }
+  .challenge-winner { color: var(--green); }
+  .challenge-loser { color: var(--text-dim); }
+
+  /* TOURNAMENT */
+  #tournament-tab-content { padding: 20px 24px; }
+  .tournament-round { margin-bottom: 24px; }
+  .round-title {
+    font-family: 'Share Tech Mono', monospace; font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--text-dim); margin-bottom: 12px; display: flex; align-items: center; gap: 12px;
+  }
+  .round-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .bracket-matches { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
+  .bracket-match { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+  .bracket-match-header {
+    font-family: 'Share Tech Mono', monospace; font-size: 9px; letter-spacing: 2px; color: var(--text-dim);
+    padding: 5px 10px; background: var(--surface2); border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between;
+  }
+  .bracket-team {
+    padding: 8px 10px; display: flex; align-items: center; gap: 8px;
+    cursor: pointer; transition: background 0.1s; border-bottom: 1px solid rgba(42,53,80,0.5);
+  }
+  .bracket-team:hover { background: var(--surface2); }
+  .bracket-team.winner { background: rgba(80,200,120,0.08); border-left: 3px solid var(--green); }
+  .bracket-team.loser { opacity: 0.5; }
+  .bracket-seed { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--text-dim); min-width: 24px; }
+  .bracket-team-name { flex: 1; font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 600; }
+  .sitrep-badge {
+    font-family: 'Share Tech Mono', monospace; font-size: 9px; letter-spacing: 1px;
+    color: var(--purple); background: rgba(155,107,255,0.1); border: 1px solid rgba(155,107,255,0.2); padding: 2px 6px; border-radius: 2px;
+  }
+  .bracket-actions { padding: 6px 10px; background: var(--surface2); border-top: 1px solid var(--border); display: flex; gap: 6px; align-items: center; }
+  .sitrep-select { flex: 1; font-family: 'Share Tech Mono', monospace; font-size: 10px; background: var(--surface3); border: 1px solid var(--border); color: var(--text-mid); padding: 3px 6px; border-radius: 2px; cursor: pointer; }
+  .losers-label {
+    display: inline-flex; align-items: center; font-family: 'Share Tech Mono', monospace; font-size: 9px; letter-spacing: 2px;
+    color: var(--red); background: rgba(232,64,64,0.08); border: 1px solid rgba(232,64,64,0.2); padding: 2px 8px; border-radius: 2px; margin-left: 8px;
+  }
+
+  /* FIRST YEAR ROLL PAGE */
+  #fyr-page {
+    padding: 24px;
+    overflow-y: auto;
+  }
+
+  .fyr-header {
+    margin-bottom: 24px;
+  }
+
+  .fyr-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 24px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--teal); margin-bottom: 6px;
+  }
+
+  .fyr-subtitle {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px; color: var(--text-dim); letter-spacing: 2px;
+  }
+
+  .fyr-section {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+    margin-bottom: 16px; overflow: hidden;
+  }
+
+  .fyr-section-header {
+    padding: 12px 16px;
+    background: var(--surface2); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .fyr-section-title {
+    font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase; color: var(--text);
+  }
+
+  .fyr-tier-badge {
+    font-family: 'Share Tech Mono', monospace; font-size: 10px; letter-spacing: 2px;
+    padding: 3px 8px; border-radius: 2px;
+  }
+  .fyr-tier-badge.vanguard { color: var(--vanguard); background: rgba(232,168,48,0.1); border: 1px solid rgba(232,168,48,0.2); }
+  .fyr-tier-badge.high-field { color: var(--teal); background: rgba(79,195,200,0.1); border: 1px solid rgba(79,195,200,0.2); }
+  .fyr-tier-badge.low-field { color: var(--purple); background: rgba(155,107,255,0.1); border: 1px solid rgba(155,107,255,0.2); }
+  .fyr-tier-badge.proving { color: var(--red); background: rgba(232,64,64,0.1); border: 1px solid rgba(232,64,64,0.2); }
+
+  .fyr-team-body { padding: 16px; }
+
+  .fyr-pilots-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px;
+  }
+
+  .fyr-pilot-row {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 3px; padding: 8px 12px;
+  }
+
+  .fyr-pilot-name {
+    font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 600;
+    flex: 1; color: var(--text);
+  }
+
+  .fyr-select {
+    font-family: 'Share Tech Mono', monospace; font-size: 10px; letter-spacing: 1px;
+    background: var(--surface3); border: 1px solid var(--border); color: var(--text-mid);
+    padding: 3px 6px; border-radius: 2px; cursor: pointer;
+  }
+
+  .fyr-profile-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 16px;
+  }
+
+  .fyr-cat-box {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 3px;
+    padding: 10px 8px; text-align: center;
+  }
+
+  .fyr-cat-name {
+    font-family: 'Share Tech Mono', monospace; font-size: 9px; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px;
+  }
+
+  .fyr-net {
+    font-family: 'Rajdhani', sans-serif; font-size: 20px; font-weight: 700; line-height: 1;
+  }
+  .fyr-net.positive { color: var(--green); }
+  .fyr-net.negative { color: var(--red); }
+  .fyr-net.neutral { color: var(--text-dim); }
+
+  .fyr-rating {
+    font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--text-dim);
+    margin-top: 3px;
+  }
+
+  .fyr-roll-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 3px;
+  }
+
+  .fyr-roll-label {
+    font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--text-dim);
+    letter-spacing: 1px; width: 160px; flex-shrink: 0;
+  }
+
+  .fyr-roll-input {
+    font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 600;
+    background: var(--surface3); border: 1px solid var(--border2); color: var(--text);
+    padding: 4px 8px; border-radius: 3px; outline: none; width: 60px; text-align: center;
+    transition: border-color 0.15s;
+  }
+  .fyr-roll-input:focus { border-color: var(--teal-dim); }
+
+  .fyr-dc-label {
+    font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--text-dim);
+    width: 80px;
+  }
+
+  .fyr-outcome {
+    font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 700;
+    letter-spacing: 1px; flex: 1;
+  }
+  .fyr-outcome.exceptional { color: var(--green); }
+  .fyr-outcome.solid { color: var(--teal); }
+  .fyr-outcome.struggling { color: var(--amber); }
+  .fyr-outcome.failing { color: var(--red); }
+
+  .fyr-points {
+    font-family: 'Rajdhani', sans-serif; font-size: 18px; font-weight: 700;
+    color: var(--text-mid); min-width: 24px; text-align: right;
+  }
+
+  .fyr-total-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; background: var(--surface3); border-top: 1px solid var(--border);
+  }
+
+  .fyr-total-label {
+    font-family: 'Share Tech Mono', monospace; font-size: 11px; letter-spacing: 2px; color: var(--text-dim);
+  }
+
+  .fyr-total-score {
+    font-family: 'Rajdhani', sans-serif; font-size: 28px; font-weight: 700; color: var(--amber);
+  }
+
+  .fyr-ladder-result {
+    font-family: 'Share Tech Mono', monospace; font-size: 11px; letter-spacing: 1px; color: var(--text-mid);
+    margin-top: 4px;
+  }
+
+  .fyr-apply-btn {
+    margin-left: 16px;
+  }
+
+  .fyr-summary-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px;
+    margin-top: 16px;
+  }
+
+  .fyr-summary-card {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 3px;
+    padding: 10px 14px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .fyr-summary-name {
+    font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 600; color: var(--text);
+  }
+
+  .fyr-summary-rank {
+    font-family: 'Rajdhani', sans-serif; font-size: 20px; font-weight: 700; color: var(--text-dim);
+  }
+
+  .fyr-instructions {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+    padding: 16px 20px; margin-bottom: 20px;
+    font-size: 13px; color: var(--text-mid); line-height: 1.6;
+  }
+
+  .fyr-dc-ref {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 12px 0;
+  }
+
+  .fyr-dc-item {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 3px;
+    padding: 8px 10px; text-align: center;
+  }
+
+  .fyr-dc-cat { font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--text-dim); margin-bottom: 4px; }
+  .fyr-dc-val { font-family: 'Rajdhani', sans-serif; font-size: 18px; font-weight: 700; color: var(--text); }
+
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="header">
+  <h1>AGCA</h1>
+  <div class="header-divider"></div>
+  <div class="week-control">
+    <label>TERM WEEK</label>
+    <button class="btn small" onclick="changeWeek(-1)">−</button>
+    <div class="week-display" id="week-display">1</div>
+    <button class="btn small" onclick="changeWeek(1)">+</button>
+  </div>
+  <div class="tournament-badge" id="tournament-badge">⬡ INVITATIONAL ACTIVE</div>
+  <div class="header-right">
+    <a class="nav-link" onclick="openWorldState()">World State ↗</a>
+    <button class="btn amber" onclick="showPage('fyr')">First Year Roll</button>
+    <button class="btn amber" onclick="toggleTournament()">Tournament Mode</button>
+    <button class="btn primary" onclick="calculateLadder()">⟳ Calculate Ladder</button>
+    <button class="btn" onclick="exportData()">Export</button>
+    <button class="btn danger" onclick="resetAll()">Reset</button>
+  </div>
+</div>
+
+<!-- APP LAYOUT -->
+<div id="app">
+
+  <!-- LADDER PANEL -->
+  <div id="ladder-panel">
+    <div class="panel-header">
+      <span class="panel-title">The Ladder</span>
+      <span id="ladder-week-label" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim)">WEEK 1</span>
+    </div>
+    <div id="ladder-list"></div>
+    <!-- Player team at bottom -->
+    <div style="border-top:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;background:rgba(232,64,64,0.04)" onclick="selectTeam('t15')">
+      <div class="rank-num" style="color:var(--floor)">16</div>
+      <div class="team-info">
+        <div class="team-name" id="player-team-name-ladder" style="color:var(--floor)">Team 16 (Players)</div>
+        <div class="team-score">Floor</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div id="main-content">
+
+    <!-- TRACKER PAGE -->
+    <div id="tracker-page" class="page active" style="display:flex;flex-direction:column;">
+
+      <!-- Empty state -->
+      <div id="empty-state">
+        <div class="empty-icon">◈</div>
+        <div class="empty-text">Select a team to begin</div>
+      </div>
+
+      <!-- Team Detail -->
+      <div id="team-detail">
+        <div class="tab-bar">
+          <div class="tab active" onclick="switchTab('clocks', this)">Clocks</div>
+          <div class="tab" onclick="switchTab('conduct', this)">Conduct</div>
+          <div class="tab" onclick="switchTab('projects', this)">Projects</div>
+          <div class="tab" onclick="switchTab('notes', this)">Notes</div>
+          <div class="tab" onclick="switchTab('challenge', this)">Challenges</div>
+          <div class="tab" onclick="switchTab('tournament', this)">Tournament</div>
+        </div>
+
+        <!-- CLOCKS TAB -->
+        <div id="tab-clocks">
+          <div class="detail-header">
+            <div class="detail-team-name" id="detail-name"></div>
+            <div class="detail-meta">
+              <span id="detail-rank-label"></span>
+              <span id="detail-tier-label"></span>
+            </div>
+          </div>
+          <div class="section">
+            <div class="section-title">Composite Score</div>
+            <div class="composite-display">
+              <div class="composite-score" id="composite-score-big">--</div>
+              <div class="composite-breakdown" id="composite-breakdown"></div>
+            </div>
+          </div>
+          <div class="section">
+            <div class="section-title">Category Clocks</div>
+            <div class="clocks-grid" id="clocks-grid"></div>
+          </div>
+        </div>
+
+        <!-- CONDUCT TAB -->
+        <div id="tab-conduct" style="display:none">
+          <div class="section">
+            <div class="section-title">Conduct Flags</div>
+            <p class="help-text" style="margin-bottom:12px">Flags expire after 4 weeks. Positive flags add +5, negative flags subtract −8 from conduct score.</p>
+            <div class="scroll-section" id="flags-list"></div>
+            <div class="add-flag-form" style="margin-top:12px">
+              <div class="flag-type-toggle">
+                <button class="flag-type-btn active-pos" id="flag-type-pos" onclick="setFlagType('positive')">+ POS</button>
+                <button class="flag-type-btn" id="flag-type-neg" onclick="setFlagType('negative')">− NEG</button>
+              </div>
+              <input type="text" class="text-input" id="flag-desc-input" placeholder="Flag description..." onkeydown="if(event.key==='Enter') addFlag()">
+              <button class="btn primary" onclick="addFlag()">Add Flag</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PROJECTS TAB -->
+        <div id="tab-projects" style="display:none">
+          <div class="section">
+            <div class="section-title">Project Clocks</div>
+            <p class="help-text" style="margin-bottom:12px">Track Canton Chief relationships, instructor bonds, investigation threads, and specific goals.</p>
+            <div id="project-clocks-list"></div>
+            <div class="add-project-form">
+              <input type="text" class="text-input" id="project-name-input" placeholder="Project name..." onkeydown="if(event.key==='Enter') addProjectClock()">
+              <select class="text-input" id="project-size-select" style="width:80px">
+                <option value="4">4 seg</option>
+                <option value="6" selected>6 seg</option>
+                <option value="8">8 seg</option>
+              </select>
+              <button class="btn primary" onclick="addProjectClock()">Add Clock</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- NOTES TAB -->
+        <div id="tab-notes" style="display:none">
+          <div class="section">
+            <div class="section-title">Team Notes</div>
+            <textarea class="notes-area" id="notes-area" placeholder="Session notes, agendas, relationship status, current investigation state..."></textarea>
+            <div style="margin-top:8px">
+              <button class="btn" onclick="saveNotes()">Save Notes</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- CHALLENGE TAB -->
+        <div id="tab-challenge" style="display:none">
+          <div id="challenge-tab-content">
+            <div class="challenge-form">
+              <select class="text-input" id="challenge-team-a"></select>
+              <div class="vs-label">VS</div>
+              <select class="text-input" id="challenge-team-b"></select>
+              <div style="display:flex;gap:6px">
+                <button class="btn small green" onclick="logChallenge('a')">A Wins</button>
+                <button class="btn small green" onclick="logChallenge('b')">B Wins</button>
+              </div>
+            </div>
+            <div class="section-title" style="margin-bottom:12px">Challenge Match History</div>
+            <div id="challenge-log-list"></div>
+          </div>
+        </div>
+
+        <!-- TOURNAMENT TAB -->
+        <div id="tab-tournament" style="display:none">
+          <div id="tournament-tab-content">
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px">
+              <div style="font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:600;color:var(--text-mid)">Year 16 Aegis Invitational</div>
+              <button class="btn small" onclick="initBracket()">Initialize Bracket</button>
+              <button class="btn small danger" onclick="resetBracket()">Reset</button>
+            </div>
+            <div id="bracket-display"></div>
+          </div>
+        </div>
+
+      </div><!-- end team-detail -->
+    </div><!-- end tracker-page -->
+
+    <!-- FIRST YEAR ROLL PAGE -->
+    <div id="fyr-page" class="page" style="display:none;overflow-y:auto;">
+      <div style="padding:24px">
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+          <div>
+            <div class="fyr-title">First Year Roll</div>
+            <div class="fyr-subtitle">NPC Ladder Placement — Post Session 0</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn" onclick="showPage('tracker')">← Back to Tracker</button>
+            <button class="btn primary" onclick="applyAllResults()">Apply All Results to Ladder</button>
+          </div>
+        </div>
+
+        <div class="fyr-instructions">
+          <strong style="color:var(--text)">How this works:</strong> Each team's pilots have a Strong (+) and Weak (−) category. The net score per category determines a DC modifier. Roll 1d6 per category, apply tier modifier and category modifier, compare to the base DC, then assign category points. Total points map to a Ladder band. Use the tiebreaker rules (Combat points first, then Individual Development, then 1d6) to assign exact ranks within each band.
+          <div class="fyr-dc-ref">
+            <div class="fyr-dc-item"><div class="fyr-dc-cat">Combat</div><div class="fyr-dc-val">14</div></div>
+            <div class="fyr-dc-item"><div class="fyr-dc-cat">Indiv Dev</div><div class="fyr-dc-val">13</div></div>
+            <div class="fyr-dc-item"><div class="fyr-dc-cat">Maintenance</div><div class="fyr-dc-val">12</div></div>
+            <div class="fyr-dc-item"><div class="fyr-dc-cat">Scholarly</div><div class="fyr-dc-val">15</div></div>
+            <div class="fyr-dc-item"><div class="fyr-dc-cat">Conduct</div><div class="fyr-dc-val">11</div></div>
+          </div>
+          <strong style="color:var(--text)">Outcome tiers:</strong> Beat DC by 4+ = Exceptional (4pts) · Beat by 1-3 = Solid (3pts) · Within 2 below = Struggling (2pts) · Miss by 3+ = Failing (1pt)
+          <br><strong style="color:var(--text)">Ladder bands:</strong> 18-20 = Vanguard (1-4) · 14-17 = High Field (5-8) · 10-13 = Low Field (9-11) · 7-9 = Proving (12-14) · 5-6 = Floor (15-16)
+        </div>
+
+        <div id="fyr-teams-container"></div>
+
+        <div style="margin-top:24px;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:20px">
+          <div style="font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;letter-spacing:2px;color:var(--text);margin-bottom:16px">Final Ladder Summary</div>
+          <div id="fyr-summary"></div>
+          <div style="margin-top:16px;display:flex;gap:8px">
+            <button class="btn primary" onclick="applyAllResults()">Apply All Results to Ladder</button>
+            <button class="btn danger small" onclick="clearAllRolls()">Clear All Rolls</button>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- end fyr-page -->
+
+  </div><!-- end main-content -->
+</div><!-- end app -->
+
+<script>
+// ════════════════════════════════════════════
+//  DATA
+// ════════════════════════════════════════════
+
+const TEAMS_DEFAULT = [
+  { id:'t1',  name:'Platinum Angels',      startTier:'vanguard'  },
+  { id:'t2',  name:'The Titans',           startTier:'vanguard'  },
+  { id:'t3',  name:'ShatterFist',          startTier:'vanguard'  },
+  { id:'t4',  name:'Blade and Claw',       startTier:'vanguard'  },
+  { id:'t5',  name:'Binary Kill',          startTier:'high-field'},
+  { id:'t6',  name:'Phantom Void',         startTier:'high-field'},
+  { id:'t7',  name:'BuzzSpear',            startTier:'high-field'},
+  { id:'t8',  name:'Somatic Obsolescence', startTier:'high-field'},
+  { id:'t9',  name:'Starlight Crush',      startTier:'low-field' },
+  { id:'t10', name:'Skull and Shadow',     startTier:'low-field' },
+  { id:'t11', name:'The Flame Divers',     startTier:'low-field' },
+  { id:'t12', name:'Golden Oldies',        startTier:'proving'   },
+  { id:'t13', name:'Trash Hulk',           startTier:'proving'   },
+  { id:'t14', name:'The Ricers',           startTier:'proving'   },
+  { id:'t15', name:'Team 16 (Players)',    startTier:'floor'     },
+];
+
+const CLOCK_CONFIG = {
+  combat:      { label:'Combat Performance',    segments:8, weight:0.50, type:'combat'      },
+  individual:  { label:'Individual Development',segments:6, weight:0.20, type:'individual'  },
+  maintenance: { label:'Maintenance Quality',   segments:6, weight:0.15, type:'maintenance' },
+  scholarly:   { label:'Scholarly Performance', segments:4, weight:0.10, type:'scholarly'   },
+  conduct:     { label:'Conduct',               segments:4, weight:0.05, type:'conduct'     },
+};
+
+const SITREPS = [
+  'Elimination','Control','Escort','Extraction',
+  'Hold Out','Recon','Interception','Asset Denial','Volatile Environment','Performance Art'
+];
+
+const TIER_MODIFIER = { 'vanguard': -6, 'high-field': -3, 'low-field': 0, 'proving': 3, 'floor': 0 };
+const BASE_DC = { combat: 14, individual: 13, maintenance: 12, scholarly: 15, conduct: 11 };
+const CATEGORIES = ['combat','individual','maintenance','scholarly','conduct'];
+
+// NPC pilot profiles: [pilotName, strong, weak]
+const NPC_PROFILES = {
+  t1: { // Platinum Angels
+    pilots: [['Highness','individual','conduct'],['Knight','combat','scholarly'],['Bishop','individual','conduct'],['Rook','maintenance','scholarly']]
+  },
+  t2: { // The Titans
+    pilots: [['Wall','combat','scholarly'],['Basher','combat','scholarly'],['Cannon','combat','individual'],['Wrecking Ball','maintenance','scholarly']]
+  },
+  t3: { // ShatterFist
+    pilots: [['PalmStrike','combat','conduct'],['Doc','maintenance','conduct'],['Sledge','combat','scholarly'],['Breach','combat','maintenance']]
+  },
+  t4: { // Blade and Claw
+    pilots: [['Alpha','combat','scholarly'],['Rend','combat','conduct'],['Fang','individual','conduct'],['Tracker','scholarly','combat']]
+  },
+  t5: { // Binary Kill
+    pilots: [['Banshee','scholarly','conduct'],['AxeWound','individual','maintenance'],['Skins','combat','scholarly'],['Rumble','maintenance','conduct']]
+  },
+  t6: { // Phantom Void
+    pilots: [['Ghost','individual','conduct'],['Wraith','combat','scholarly'],['Echo','scholarly','maintenance'],['Lure','individual','combat']]
+  },
+  t7: { // BuzzSpear
+    pilots: [['Queen Bee','individual','combat'],['Stinger','combat','conduct'],['Swarm','maintenance','individual'],['Drone','scholarly','conduct']]
+  },
+  t8: { // Somatic Obsolescence
+    pilots: [['Prophet','scholarly','maintenance'],['Endless','combat','conduct'],['Mindstorm','scholarly','maintenance'],['Ether','individual','combat']]
+  },
+  t9: { // Starlight Crush
+    pilots: [['Starchild','combat','scholarly'],['Magician','individual','maintenance'],['Hierophant','scholarly','conduct'],['Fool','maintenance','individual']]
+  },
+  t10: { // Skull and Shadow
+    pilots: [['Lord Shadow','individual','conduct'],['Sergeant Hatred','combat','scholarly'],['Pain','combat','maintenance'],['Sorrow','individual','conduct']]
+  },
+  t11: { // Flame Divers
+    pilots: [['Inferno','combat','maintenance'],['Meltdown','combat','maintenance'],['Sunburn','individual','conduct'],['Forge','maintenance','scholarly']]
+  },
+  t12: { // Golden Oldies
+    pilots: [['Skipper','scholarly','combat'],['Grunt','combat','scholarly'],['Fixer','maintenance','individual'],['Ace','individual','conduct']]
+  },
+  t13: { // Trash Hulk
+    pilots: [['Boss','combat','scholarly'],['Wildcard','combat','conduct'],['Stitch','maintenance','scholarly'],['Kiddo','individual','maintenance']]
+  },
+  t14: { // The Ricers
+    pilots: [['Big Cheese','individual','conduct'],['Redline','individual','maintenance'],['Clout','individual','scholarly'],['BassDrop','scholarly','conduct']]
+  },
+};
+
+// ════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════
+
+function defaultTeamData(id, name) {
+  return { id, name, clocks:{combat:0,individual:0,maintenance:0,scholarly:0,conduct:0}, projectClocks:[], conductFlags:[], matchHistory:[], notes:'', ladderScore:0, rank:0 };
+}
+
+let state = {
+  week: 1,
+  tournamentActive: false,
+  teams: {},
+  selectedTeamId: null,
+  activeFlagType: 'positive',
+  challengeLog: [],
+  bracket: null,
+  fyrRolls: {}, // teamId -> { combat, individual, maintenance, scholarly, conduct } roll values
+  fyrResults: {}, // teamId -> final rank after rolls
+};
+
+// ════════════════════════════════════════════
+//  PERSISTENCE
+// ════════════════════════════════════════════
+
+function saveState() {
+  try { localStorage.setItem('agca_tracker_v3', JSON.stringify(state)); } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem('agca_tracker_v3');
+    if (saved) { const p = JSON.parse(saved); state = { ...state, ...p }; }
+  } catch(e) {}
+  TEAMS_DEFAULT.forEach(t => {
+    if (!state.teams[t.id]) state.teams[t.id] = defaultTeamData(t.id, t.name);
+    else state.teams[t.id].name = t.name; // keep names canonical
+  });
+  if (!state.fyrRolls) state.fyrRolls = {};
+  if (!state.fyrResults) state.fyrResults = {};
+}
+
+// ════════════════════════════════════════════
+//  PAGE NAVIGATION
+// ════════════════════════════════════════════
+
+function showPage(page) {
+  document.getElementById('tracker-page').style.display = page === 'tracker' ? 'flex' : 'none';
+  document.getElementById('fyr-page').style.display = page === 'fyr' ? 'block' : 'none';
+  if (page === 'fyr') renderFYRPage();
+}
+
+function openWorldState() {
+  window.open('AGCA_World_State.html', '_blank');
+}
+
+// ════════════════════════════════════════════
+//  LADDER
+// ════════════════════════════════════════════
+
+function getClockScore(teamId, clockKey) {
+  const team = state.teams[teamId];
+  const cfg = CLOCK_CONFIG[clockKey];
+  return Math.round(((team.clocks[clockKey] || 0) / cfg.segments) * 100);
+}
+
+function getConductScore(teamId) {
+  const base = getClockScore(teamId, 'conduct');
+  const activeFlags = (state.teams[teamId].conductFlags || []).filter(f => state.week - f.weekAdded < 4);
+  return Math.max(0, Math.min(100, base + activeFlags.filter(f=>f.positive).length*5 - activeFlags.filter(f=>!f.positive).length*8));
+}
+
+function getCompositeScore(teamId) {
+  return Math.round(
+    getClockScore(teamId,'combat')      * 0.50 +
+    getClockScore(teamId,'individual')  * 0.20 +
+    getClockScore(teamId,'maintenance') * 0.15 +
+    getClockScore(teamId,'scholarly')   * 0.10 +
+    getConductScore(teamId)             * 0.05
+  );
+}
+
+function getTier(rank, total) {
+  if (rank <= 4) return 'vanguard';
+  if (rank <= total - 5) return 'field';
+  if (rank < total) return 'proving';
+  return 'floor';
+}
+
+function getTierLabel(tier) {
+  return { vanguard:'Vanguard', field:'Field', proving:'Proving', floor:'Floor' }[tier] || tier;
+}
+
+function calculateLadder() {
+  const active = TEAMS_DEFAULT.filter(t => t.id !== 't15');
+  const scored = active.map(t => ({ id:t.id, score:getCompositeScore(t.id) }));
+  scored.sort((a,b) => b.score - a.score);
+  scored.forEach((t,i) => { state.teams[t.id].rank = i+1; state.teams[t.id].ladderScore = t.score; });
+  saveState();
+  renderLadder();
+  if (state.selectedTeamId) renderTeamDetail(state.selectedTeamId);
+}
+
+function renderLadder() {
+  const list = document.getElementById('ladder-list');
+  document.getElementById('ladder-week-label').textContent = `WEEK ${state.week}`;
+
+  const active = TEAMS_DEFAULT.filter(t => t.id !== 't15');
+  const sorted = [...active].sort((a,b) => (state.teams[a.id]?.rank||99) - (state.teams[b.id]?.rank||99));
+  const total = active.length;
+  const tiers = { vanguard:[], field:[], proving:[], floor:[] };
+  sorted.forEach((t,i) => {
+    const rank = state.teams[t.id]?.rank || (i+1);
+    tiers[getTier(rank, total)].push({ ...t, rank });
+  });
+
+  const tierNames = { vanguard:'Vanguard — Ranks 1–4', field:'Field — Ranks 5–9', proving:'Proving — Ranks 10–13', floor:'Floor — Ranks 14–15' };
+  let html = '';
+  ['vanguard','field','proving','floor'].forEach(tier => {
+    if (!tiers[tier].length) return;
+    html += `<div class="tier-section"><div class="tier-label ${tier}"><div class="tier-dot"></div>${tierNames[tier]}</div>`;
+    tiers[tier].forEach(t => {
+      const team = state.teams[t.id];
+      const score = team.ladderScore || 0;
+      const sel = state.selectedTeamId === t.id ? 'selected' : '';
+      const flags = (team.conductFlags||[]).filter(f => state.week-f.weekAdded<4);
+      const barColor = tier==='vanguard'?'var(--amber)':tier==='field'?'var(--teal)':tier==='proving'?'var(--purple)':'var(--red)';
+      let dots = '';
+      flags.filter(f=>f.positive).slice(0,3).forEach(()=>dots+=`<div class="flag-dot" style="background:var(--green)"></div>`);
+      flags.filter(f=>!f.positive).slice(0,3).forEach(()=>dots+=`<div class="flag-dot" style="background:var(--red)"></div>`);
+      html += `<div class="team-row ${sel} tier-${tier}" onclick="selectTeam('${t.id}')">
+        <div class="rank-num">${t.rank}</div>
+        <div class="team-info"><div class="team-name">${team.name}</div><div class="team-score">${score}/100</div></div>
+        <div class="flag-indicator">${dots}</div>
+        <div class="score-bar"><div class="score-fill" style="width:${score}%;background:${barColor}"></div></div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+  list.innerHTML = html;
+}
+
+// ════════════════════════════════════════════
+//  TEAM SELECTION + DETAIL
+// ════════════════════════════════════════════
+
+function selectTeam(teamId) {
+  state.selectedTeamId = teamId;
+  showPage('tracker');
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('team-detail').style.display = 'block';
+  renderTeamDetail(teamId);
+  renderLadder();
+}
+
+function renderTeamDetail(teamId) {
+  const team = state.teams[teamId];
+  if (!team) return;
+  const rank = team.rank || '?';
+  const tier = getTier(rank, 14);
+  document.getElementById('detail-name').textContent = team.name;
+  document.getElementById('detail-rank-label').textContent = `Rank #${rank}`;
+  document.getElementById('detail-tier-label').innerHTML = `<span style="color:var(--${tier})">${getTierLabel(tier)}</span>`;
+  renderClocks(teamId); renderComposite(teamId); renderFlags(teamId); renderProjectClocks(teamId);
+  document.getElementById('notes-area').value = team.notes || '';
+  populateChallengeSelects(); renderChallengeLog();
+  if (state.bracket) renderBracket();
+}
+
+// ════════════════════════════════════════════
+//  CLOCKS
+// ════════════════════════════════════════════
+
+function renderClocks(teamId) {
+  const team = state.teams[teamId];
+  const grid = document.getElementById('clocks-grid');
+  if (!grid) return;
+  let html = '';
+  Object.entries(CLOCK_CONFIG).forEach(([key, cfg]) => {
+    const filled = team.clocks[key] || 0;
+    const isFullWidth = key === 'combat';
+    let segs = '';
+    for (let i = 0; i < cfg.segments; i++) {
+      const isFilled = filled > i;
+      const isHalf = !isFilled && (filled === i + 0.5);
+      segs += `<div class="segment ${isFilled?'filled':isHalf?'half-filled':''}" onclick="toggleSegment('${teamId}','${key}',${i})"></div>`;
+    }
+    const pct = Math.round((filled/cfg.segments)*100);
+    html += `<div class="clock-item ${isFullWidth?'full-width':''} clock-${cfg.type}">
+      <div class="clock-name"><span>${cfg.label}</span><span class="clock-weight">${Math.round(cfg.weight*100)}%</span></div>
+      <div class="clock-segments">${segs}</div>
+      <div class="clock-score">${filled}/${cfg.segments} — ${pct}%</div>
+    </div>`;
+  });
+  grid.innerHTML = html;
+}
+
+function toggleSegment(teamId, clockKey, segIndex) {
+  const team = state.teams[teamId];
+  const current = team.clocks[clockKey] || 0;
+  if (current >= segIndex + 1) team.clocks[clockKey] = segIndex;
+  else if (current === segIndex + 0.5) team.clocks[clockKey] = segIndex + 1;
+  else team.clocks[clockKey] = segIndex + 0.5;
+  saveState(); renderClocks(teamId); renderComposite(teamId); renderLadder();
+}
+
+function renderComposite(teamId) {
+  const combat = getClockScore(teamId,'combat'), individual = getClockScore(teamId,'individual'),
+    maintenance = getClockScore(teamId,'maintenance'), scholarly = getClockScore(teamId,'scholarly'),
+    conduct = getConductScore(teamId), composite = getCompositeScore(teamId);
+  const scoreEl = document.getElementById('composite-score-big');
+  const bdEl = document.getElementById('composite-breakdown');
+  if (!scoreEl||!bdEl) return;
+  const color = composite>=70?'var(--green)':composite>=40?'var(--teal)':composite>=20?'var(--amber)':'var(--red)';
+  scoreEl.textContent = composite; scoreEl.style.color = color;
+  bdEl.innerHTML = `
+    <div class="breakdown-item"><span>Combat (50%)</span><span class="breakdown-val">${combat}</span></div>
+    <div class="breakdown-item"><span>Individual (20%)</span><span class="breakdown-val">${individual}</span></div>
+    <div class="breakdown-item"><span>Maintenance (15%)</span><span class="breakdown-val">${maintenance}</span></div>
+    <div class="breakdown-item"><span>Scholarly (10%)</span><span class="breakdown-val">${scholarly}</span></div>
+    <div class="breakdown-item"><span>Conduct (5%)</span><span class="breakdown-val">${conduct}</span></div>`;
+}
+
+// ════════════════════════════════════════════
+//  CONDUCT FLAGS
+// ════════════════════════════════════════════
+
+let activeFlagType = 'positive';
+
+function setFlagType(type) {
+  activeFlagType = type;
+  document.getElementById('flag-type-pos').className = 'flag-type-btn'+(type==='positive'?' active-pos':'');
+  document.getElementById('flag-type-neg').className = 'flag-type-btn'+(type==='negative'?' active-neg':'');
+}
+
+function addFlag() {
+  const teamId = state.selectedTeamId; if (!teamId) return;
+  const desc = document.getElementById('flag-desc-input').value.trim(); if (!desc) return;
+  state.teams[teamId].conductFlags.push({ id:Date.now().toString(), description:desc, positive:activeFlagType==='positive', weekAdded:state.week });
+  document.getElementById('flag-desc-input').value = '';
+  saveState(); renderFlags(teamId); renderComposite(teamId); renderLadder();
+}
+
+function removeFlag(teamId, flagId) {
+  state.teams[teamId].conductFlags = state.teams[teamId].conductFlags.filter(f=>f.id!==flagId);
+  saveState(); renderFlags(teamId); renderComposite(teamId); renderLadder();
+}
+
+function renderFlags(teamId) {
+  const team = state.teams[teamId];
+  const list = document.getElementById('flags-list'); if (!list) return;
+  if (!team.conductFlags.length) { list.innerHTML='<div style="color:var(--text-dim);font-size:13px;padding:8px 0">No conduct flags recorded.</div>'; return; }
+  list.innerHTML = team.conductFlags.map(flag => {
+    const age = state.week - flag.weekAdded;
+    const expired = age >= 4;
+    return `<div class="flag-item ${expired?'expired':''} ${flag.positive?'flag-positive':'flag-negative'}">
+      <div class="flag-type-dot"></div>
+      <div class="flag-content">
+        <div class="flag-desc">${flag.description}</div>
+        <div class="flag-meta">
+          <span>${flag.positive?'+ Positive':'− Negative'}</span>
+          <span>Added Wk${flag.weekAdded}</span>
+          <span class="${expired?'':'flag-week-remaining'}">${expired?'EXPIRED':`${4-age}wk remaining`}</span>
+        </div>
+      </div>
+      <button class="btn small danger" onclick="removeFlag('${teamId}','${flag.id}')">✕</button>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════
+//  PROJECT CLOCKS
+// ════════════════════════════════════════════
+
+function addProjectClock() {
+  const teamId = state.selectedTeamId; if (!teamId) return;
+  const name = document.getElementById('project-name-input').value.trim(); if (!name) return;
+  const size = parseInt(document.getElementById('project-size-select').value)||6;
+  state.teams[teamId].projectClocks.push({ id:Date.now().toString(), name, total:size, filled:0 });
+  document.getElementById('project-name-input').value = '';
+  saveState(); renderProjectClocks(teamId);
+}
+
+function toggleProjectSegment(teamId, clockId, segIndex) {
+  const clock = state.teams[teamId].projectClocks.find(c=>c.id===clockId); if (!clock) return;
+  const cur = clock.filled;
+  if (cur >= segIndex+1) clock.filled = segIndex;
+  else if (cur === segIndex+0.5) clock.filled = segIndex+1;
+  else clock.filled = segIndex+0.5;
+  saveState(); renderProjectClocks(teamId);
+}
+
+function removeProjectClock(teamId, clockId) {
+  state.teams[teamId].projectClocks = state.teams[teamId].projectClocks.filter(c=>c.id!==clockId);
+  saveState(); renderProjectClocks(teamId);
+}
+
+function updateProjectName(teamId, clockId, newName) {
+  const clock = state.teams[teamId].projectClocks.find(c=>c.id===clockId);
+  if (clock) { clock.name = newName; saveState(); }
+}
+
+function renderProjectClocks(teamId) {
+  const team = state.teams[teamId];
+  const list = document.getElementById('project-clocks-list'); if (!list) return;
+  if (!team.projectClocks.length) { list.innerHTML='<div style="color:var(--text-dim);font-size:13px;padding:8px 0;margin-bottom:8px">No project clocks.</div>'; return; }
+  list.innerHTML = team.projectClocks.map(clock => {
+    const pct = Math.round((clock.filled/clock.total)*100);
+    let segs = '';
+    for (let i=0;i<clock.total;i++) {
+      const isFilled=clock.filled>i, isHalf=!isFilled&&clock.filled===i+0.5;
+      segs += `<div class="project-segment ${isFilled?'filled':isHalf?'half-filled':''}" onclick="toggleProjectSegment('${teamId}','${clock.id}',${i})"></div>`;
+    }
+    return `<div class="project-clock">
+      <div class="project-clock-header">
+        <input type="text" class="project-clock-name" value="${clock.name}" onchange="updateProjectName('${teamId}','${clock.id}',this.value)">
+        <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim)">${pct}%</span>
+        <button class="btn small danger" onclick="removeProjectClock('${teamId}','${clock.id}')">✕</button>
+      </div>
+      <div class="project-segments-row"><div class="project-segments">${segs}</div>
+      <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim);min-width:40px;text-align:right">${clock.filled}/${clock.total}</span></div>
+      ${pct>=100?'<div style="font-family:\'Share Tech Mono\',monospace;font-size:10px;color:var(--green);letter-spacing:2px;margin-top:4px">✓ COMPLETE</div>':''}
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════
+//  NOTES
+// ════════════════════════════════════════════
+
+function saveNotes() {
+  const teamId = state.selectedTeamId; if (!teamId) return;
+  state.teams[teamId].notes = document.getElementById('notes-area').value;
+  saveState();
+}
+
+// ════════════════════════════════════════════
+//  WEEK
+// ════════════════════════════════════════════
+
+function changeWeek(delta) {
+  state.week = Math.max(1, state.week + delta);
+  document.getElementById('week-display').textContent = state.week;
+  document.getElementById('ladder-week-label').textContent = `WEEK ${state.week}`;
+  saveState();
+  if (state.selectedTeamId) renderFlags(state.selectedTeamId);
+  renderLadder();
+}
+
+// ════════════════════════════════════════════
+//  TOURNAMENT
+// ════════════════════════════════════════════
+
+function toggleTournament() {
+  state.tournamentActive = !state.tournamentActive;
+  document.getElementById('tournament-badge').classList.toggle('active', state.tournamentActive);
+  saveState();
+}
+
+function switchTab(tab, el) {
+  ['clocks','conduct','projects','notes','challenge','tournament'].forEach(t => {
+    document.getElementById(`tab-${t}`).style.display = t===tab?'':'none';
+  });
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+
+function populateChallengeSelects() {
+  const selA = document.getElementById('challenge-team-a');
+  const selB = document.getElementById('challenge-team-b');
+  if (!selA||!selB) return;
+  const html = TEAMS_DEFAULT.filter(t=>t.id!=='t15').map(t=>`<option value="${t.id}">${state.teams[t.id].name}</option>`).join('');
+  selA.innerHTML = html; selB.innerHTML = html;
+  if (state.selectedTeamId) { selA.value = state.selectedTeamId; const o=TEAMS_DEFAULT.find(t=>t.id!==state.selectedTeamId&&t.id!=='t15'); if(o) selB.value=o.id; }
+}
+
+function logChallenge(winner) {
+  const aId = document.getElementById('challenge-team-a').value;
+  const bId = document.getElementById('challenge-team-b').value;
+  if (aId===bId) { alert('Teams must be different.'); return; }
+  const winnerId = winner==='a'?aId:bId, loserId=winner==='a'?bId:aId;
+  state.teams[winnerId].clocks.combat = Math.min(8,(state.teams[winnerId].clocks.combat||0)+2);
+  state.teams[loserId].clocks.combat  = Math.max(0,(state.teams[loserId].clocks.combat||0)-1);
+  state.challengeLog.unshift({ id:Date.now().toString(), week:state.week, teamA:aId, teamB:bId, winner:winnerId, loser:loserId });
+  saveState(); renderChallengeLog(); renderLadder();
+  if (state.selectedTeamId) { renderClocks(state.selectedTeamId); renderComposite(state.selectedTeamId); }
+}
+
+function renderChallengeLog() {
+  const list = document.getElementById('challenge-log-list'); if (!list) return;
+  if (!state.challengeLog.length) { list.innerHTML='<div style="color:var(--text-dim);font-size:13px">No challenge matches recorded.</div>'; return; }
+  list.innerHTML = state.challengeLog.map(m => {
+    const winName = state.teams[m.winner]?.name||m.winner;
+    const loseName = state.teams[m.loser]?.name||m.loser;
+    return `<div class="challenge-entry">
+      <div class="challenge-week-tag">WK ${m.week}</div>
+      <div class="challenge-teams"><span class="challenge-winner">▲ ${winName}</span><span style="color:var(--text-dim)"> vs </span><span class="challenge-loser">▽ ${loseName}</span></div>
+      <button class="btn small danger" onclick="deleteChallenge('${m.id}')">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function deleteChallenge(id) {
+  state.challengeLog = state.challengeLog.filter(m=>m.id!==id);
+  saveState(); renderChallengeLog();
+}
+
+function initBracket() {
+  calculateLadder();
+  const active = TEAMS_DEFAULT.filter(t=>t.id!=='t15');
+  const sorted = [...active].sort((a,b)=>(state.teams[a.id]?.rank||99)-(state.teams[b.id]?.rank||99));
+  const matches = [];
+  for (let i=0;i<7;i++) {
+    const high=sorted[i], low=sorted[sorted.length-1-i];
+    matches.push({ id:`r1m${i}`, round:1, bracket:'main', teamA:high.id, teamB:low.id, winner:null, loser:null, sitrep:'', week:state.week });
+  }
+  state.bracket = { initialized:true, startWeek:state.week, matches, eliminated:[], champion:null };
+  saveState(); renderBracket(); renderLadder();
+}
+
+function resetBracket() {
+  if (!confirm('Reset the tournament bracket?')) return;
+  state.bracket = null; saveState(); renderBracket();
+}
+
+function setBracketWinner(matchId, winnerTeamId) {
+  if (!state.bracket) return;
+  const match = state.bracket.matches.find(m=>m.id===matchId); if (!match) return;
+  const loserTeamId = match.teamA===winnerTeamId?match.teamB:match.teamA;
+  match.winner=winnerTeamId; match.loser=loserTeamId;
+  state.teams[winnerTeamId].clocks.combat = Math.min(8,(state.teams[winnerTeamId].clocks.combat||0)+2);
+  state.teams[loserTeamId].clocks.combat  = Math.max(0,(state.teams[loserTeamId].clocks.combat||0)-1);
+  saveState(); renderBracket(); renderLadder();
+}
+
+function setBracketSitrep(matchId, sitrep) {
+  if (!state.bracket) return;
+  const match = state.bracket.matches.find(m=>m.id===matchId);
+  if (match) { match.sitrep=sitrep; saveState(); }
+}
+
+function clearMatchResult(matchId) {
+  const match = state.bracket?.matches.find(m=>m.id===matchId); if (!match) return;
+  match.winner=null; match.loser=null; saveState(); renderBracket();
+}
+
+function addNextRound() {
+  if (!state.bracket) return;
+  const maxRound = Math.max(...state.bracket.matches.map(m=>m.round));
+  const newRound = maxRound+1;
+  const lastMain = state.bracket.matches.filter(m=>m.round===maxRound&&m.bracket==='main'&&m.winner);
+  const lastLosers = state.bracket.matches.filter(m=>m.round===maxRound&&m.bracket==='losers'&&m.winner);
+  const newMain=[], newLosers=[];
+  for (let i=0;i<Math.floor(lastMain.length/2);i++) {
+    newMain.push({ id:`r${newRound}m${i}`, round:newRound, bracket:'main', teamA:lastMain[i*2].winner, teamB:lastMain[i*2+1].winner, winner:null, loser:null, sitrep:'', week:state.week });
+  }
+  const mainLosers=state.bracket.matches.filter(m=>m.round===maxRound&&m.bracket==='main'&&m.loser).map(m=>m.loser);
+  const losersWinners=lastLosers.map(m=>m.winner);
+  const pool=[...mainLosers,...losersWinners];
+  for (let i=0;i<Math.floor(pool.length/2);i++) {
+    newLosers.push({ id:`r${newRound}l${i}`, round:newRound, bracket:'losers', teamA:pool[i*2], teamB:pool[i*2+1], winner:null, loser:null, sitrep:'', week:state.week });
+  }
+  state.bracket.matches=[...state.bracket.matches,...newMain,...newLosers];
+  saveState(); renderBracket();
+}
+
+function renderMatchCard(m) {
+  const teamA=state.teams[m.teamA], teamB=state.teams[m.teamB];
+  const aClass=m.winner===m.teamA?'winner':m.loser===m.teamA?'loser':'';
+  const bClass=m.winner===m.teamB?'winner':m.loser===m.teamB?'loser':'';
+  const sitrep_opts=SITREPS.map(s=>`<option value="${s}" ${m.sitrep===s?'selected':''}>${s}</option>`).join('');
+  return `<div class="bracket-match">
+    <div class="bracket-match-header"><span>Week ${m.week||'?'}</span>${m.sitrep?`<span class="sitrep-badge">${m.sitrep}</span>`:''}</div>
+    <div class="bracket-team ${aClass}" onclick="${m.winner?'':'setBracketWinner(\''+m.id+'\',\''+m.teamA+'\')'}">
+      <span class="bracket-seed">#${teamA?.rank||'?'}</span><span class="bracket-team-name">${teamA?.name||'TBD'}</span>
+      ${m.winner===m.teamA?'<span style="color:var(--green);font-size:11px">WIN</span>':''}
+    </div>
+    <div class="bracket-team ${bClass}" onclick="${m.winner?'':'setBracketWinner(\''+m.id+'\',\''+m.teamB+'\')'}">
+      <span class="bracket-seed">#${teamB?.rank||'?'}</span><span class="bracket-team-name">${teamB?.name||'TBD'}</span>
+      ${m.winner===m.teamB?'<span style="color:var(--green);font-size:11px">WIN</span>':''}
+    </div>
+    <div class="bracket-actions">
+      <select class="sitrep-select" onchange="setBracketSitrep('${m.id}',this.value)"><option value="">Assign Sitrep...</option>${sitrep_opts}</select>
+      ${m.winner?`<button class="btn small danger" onclick="clearMatchResult('${m.id}')">Reset</button>`:''}
+    </div>
+  </div>`;
+}
+
+function renderBracket() {
+  const display = document.getElementById('bracket-display'); if (!display) return;
+  if (!state.bracket?.initialized) { display.innerHTML=`<div style="color:var(--text-dim);font-size:13px;padding:12px 0">Click "Initialize Bracket" to set up the Year 16 Aegis Invitational using current Ladder rankings.</div>`; return; }
+  const rounds={};
+  state.bracket.matches.forEach(m=>{ if(!rounds[m.round]) rounds[m.round]={main:[],losers:[]}; rounds[m.round][m.bracket].push(m); });
+  let html='';
+  Object.keys(rounds).sort().forEach(round=>{
+    const rd=rounds[round];
+    if (rd.main.length) html+=`<div class="tournament-round"><div class="round-title">Round ${round} — Main Bracket</div><div class="bracket-matches">${rd.main.map(m=>renderMatchCard(m)).join('')}</div></div>`;
+    if (rd.losers.length) html+=`<div class="tournament-round"><div class="round-title">Round ${round} <span class="losers-label">Losers</span></div><div class="bracket-matches">${rd.losers.map(m=>renderMatchCard(m)).join('')}</div></div>`;
+  });
+  html+=`<div style="margin-top:16px"><button class="btn amber" onclick="addNextRound()">+ Add Next Round</button></div>`;
+  display.innerHTML=html;
+}
+
+// ════════════════════════════════════════════
+//  FIRST YEAR ROLL
+// ════════════════════════════════════════════
+
+function getTeamProfile(teamId) {
+  const profile = NPC_PROFILES[teamId];
+  if (!profile) return null;
+  const net = { combat:0, individual:0, maintenance:0, scholarly:0, conduct:0 };
+  profile.pilots.forEach(([,strong,weak]) => { net[strong]++; net[weak]--; });
+  return net;
+}
+
+function getDCModifier(net) {
+  if (net >= 3) return -4;
+  if (net === 2) return -2;
+  if (net === 1) return -1;
+  if (net === 0) return 0;
+  if (net === -1) return 1;
+  if (net === -2) return 2;
+  return 4;
+}
+
+function getRating(net) {
+  if (net >= 3) return 'Exceptional';
+  if (net === 2) return 'Strong';
+  if (net === 1) return 'Capable';
+  if (net === 0) return 'Neutral';
+  if (net === -1) return 'Struggling';
+  if (net === -2) return 'Weak';
+  return 'Failing';
+}
+
+function getOutcome(roll, baseDC, catMod, tierMod) {
+  const modified = roll + catMod + tierMod; // negative modifiers = easier (lower effective DC)
+  // We apply modifiers to the DC instead: effectiveDC = baseDC - catMod - tierMod... 
+  // Actually: modified roll vs base DC. Higher roll = better. Modifiers added to roll.
+  const diff = modified - baseDC;
+  if (diff >= 4) return { label:'Exceptional', cls:'exceptional', points:4 };
+  if (diff >= 1) return { label:'Solid', cls:'solid', points:3 };
+  if (diff >= -2) return { label:'Struggling', cls:'struggling', points:2 };
+  return { label:'Failing', cls:'failing', points:1 };
+}
+
+function getLadderBand(total) {
+  if (total >= 18) return 'Vanguard (Ranks 1–4)';
+  if (total >= 14) return 'High Field (Ranks 5–8)';
+  if (total >= 10) return 'Low Field (Ranks 9–11)';
+  if (total >= 7)  return 'Proving (Ranks 12–14)';
+  return 'Floor (Ranks 15–16)';
+}
+
+function fyrUpdateRoll(teamId, cat, value) {
+  if (!state.fyrRolls[teamId]) state.fyrRolls[teamId] = {};
+  state.fyrRolls[teamId][cat] = parseInt(value) || 0;
+  saveState();
+  renderFYRTeamResult(teamId);
+  renderFYRSummary();
+}
+
+function renderFYRPage() {
+  const container = document.getElementById('fyr-teams-container');
+  const npcTeams = TEAMS_DEFAULT.filter(t => t.id !== 't15');
+
+  container.innerHTML = npcTeams.map(team => {
+    const profile = getTeamProfile(team.id);
+    if (!profile) return '';
+    const tierMod = TIER_MODIFIER[team.startTier] || 0;
+    const tierLabel = { 'vanguard':'Vanguard', 'high-field':'High Field', 'low-field':'Low Field', 'proving':'Proving' }[team.startTier] || team.startTier;
+    const tierClass = team.startTier;
+
+    const pilotRows = (NPC_PROFILES[team.id]?.pilots || []).map(([name, strong, weak]) =>
+      `<div class="fyr-pilot-row">
+        <div class="fyr-pilot-name">${name}</div>
+        <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--green)">+${strong}</span>
+        <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--red)">−${weak}</span>
+      </div>`
+    ).join('');
+
+    const catBoxes = CATEGORIES.map(cat => {
+      const net = profile[cat];
+      const cls = net > 0 ? 'positive' : net < 0 ? 'negative' : 'neutral';
+      return `<div class="fyr-cat-box">
+        <div class="fyr-cat-name">${cat}</div>
+        <div class="fyr-net ${cls}">${net > 0 ? '+' : ''}${net}</div>
+        <div class="fyr-rating">${getRating(net)}</div>
+      </div>`;
+    }).join('');
+
+    const rollRows = CATEGORIES.map(cat => {
+      const rolls = state.fyrRolls[team.id] || {};
+      const rollVal = rolls[cat] || '';
+      const catMod = getDCModifier(profile[cat]);
+      const baseDC = BASE_DC[cat];
+      const effectiveDC = baseDC - catMod - Math.abs(tierMod) * (tierMod < 0 ? 1 : -1);
+      // Simpler: we add catMod and tierMod to the roll and compare to baseDC
+      const negTierMod = -tierMod; // tier mod as stored is "add to roll" equivalent when negated
+      let outcomeHtml = '<span class="fyr-outcome" style="color:var(--text-dim)">—</span><span class="fyr-points" style="color:var(--text-dim)">—</span>';
+      if (rollVal !== '') {
+        const outcome = getOutcome(parseInt(rollVal), baseDC, getDCModifier(profile[cat]), -tierMod);
+        outcomeHtml = `<span class="fyr-outcome ${outcome.cls}">${outcome.label}</span><span class="fyr-points">${outcome.points}pts</span>`;
+      }
+      return `<div class="fyr-roll-row">
+        <div class="fyr-roll-label">${cat.toUpperCase()} (DC ${baseDC})</div>
+        <input type="number" class="fyr-roll-input" min="1" max="6" placeholder="1d6" value="${rollVal}"
+          oninput="fyrUpdateRoll('${team.id}','${cat}',this.value)">
+        <div class="fyr-dc-label">+${getDCModifier(profile[cat]) < 0 ? getDCModifier(profile[cat]) : '+'+getDCModifier(profile[cat])} cat · ${tierMod > 0 ? '−' : '+'}${Math.abs(tierMod)} tier</div>
+        ${outcomeHtml}
+      </div>`;
+    }).join('');
+
+    return `<div class="fyr-section" id="fyr-team-${team.id}">
+      <div class="fyr-section-header">
+        <div class="fyr-section-title">${team.name}</div>
+        <span class="fyr-tier-badge ${tierClass}">Starting: ${tierLabel} · Tier Mod ${tierMod > 0 ? '+' : ''}${-tierMod}</span>
+      </div>
+      <div class="fyr-team-body">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px">PILOT PROFILES</div>
+        <div class="fyr-pilots-grid">${pilotRows}</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px">TEAM PROFILE</div>
+        <div class="fyr-profile-grid">${catBoxes}</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px">ROLLS</div>
+        <div style="display:flex;flex-direction:column;gap:6px" id="fyr-rolls-${team.id}">${rollRows}</div>
+        <div class="fyr-total-row" id="fyr-total-${team.id}">
+          <div><div class="fyr-total-label">TOTAL POINTS</div><div class="fyr-ladder-result" id="fyr-band-${team.id}"></div></div>
+          <div class="fyr-total-score" id="fyr-total-score-${team.id}">—</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  renderFYRSummary();
+  // Re-render all results since we rebuilt the DOM
+  npcTeams.forEach(t => { if (NPC_PROFILES[t.id]) renderFYRTeamResult(t.id); });
+}
+
+function renderFYRTeamResult(teamId) {
+  const rolls = state.fyrRolls[teamId] || {};
+  const profile = getTeamProfile(teamId);
+  const team = TEAMS_DEFAULT.find(t=>t.id===teamId);
+  if (!profile || !team) return;
+  const tierMod = TIER_MODIFIER[team.startTier] || 0;
+
+  let total = 0; let allFilled = true;
+  CATEGORIES.forEach(cat => {
+    const roll = rolls[cat];
+    if (roll === undefined || roll === '' || isNaN(roll)) { allFilled = false; return; }
+    const outcome = getOutcome(parseInt(roll), BASE_DC[cat], getDCModifier(profile[cat]), -tierMod);
+    total += outcome.points;
+  });
+
+  const totalEl = document.getElementById(`fyr-total-score-${teamId}`);
+  const bandEl = document.getElementById(`fyr-band-${teamId}`);
+  if (totalEl) totalEl.textContent = allFilled ? total : '—';
+  if (bandEl) bandEl.textContent = allFilled ? getLadderBand(total) : 'Enter all rolls above';
+}
+
+function renderFYRSummary() {
+  const summaryEl = document.getElementById('fyr-summary'); if (!summaryEl) return;
+  const npcTeams = TEAMS_DEFAULT.filter(t => t.id !== 't15' && NPC_PROFILES[t.id]);
+
+  const results = npcTeams.map(team => {
+    const rolls = state.fyrRolls[team.id] || {};
+    const profile = getTeamProfile(team.id);
+    const tierMod = TIER_MODIFIER[team.startTier] || 0;
+    let total = 0; let allFilled = true;
+    CATEGORIES.forEach(cat => {
+      const roll = rolls[cat];
+      if (roll === undefined || roll === '' || isNaN(roll)) { allFilled = false; return; }
+      const outcome = getOutcome(parseInt(roll), BASE_DC[cat], getDCModifier(profile[cat]), -tierMod);
+      total += outcome.points;
+    });
+    return { id:team.id, name:team.name, total, allFilled, combatPts: allFilled ? getOutcome(parseInt(rolls.combat||0), BASE_DC.combat, getDCModifier(profile.combat), -tierMod).points : 0 };
+  });
+
+  const filled = results.filter(r => r.allFilled);
+  if (!filled.length) { summaryEl.innerHTML = '<div style="color:var(--text-dim);font-size:13px">Enter rolls for all teams to see final rankings.</div>'; return; }
+
+  // Sort: by total desc, then combat pts desc, then name
+  filled.sort((a,b) => b.total !== a.total ? b.total - a.total : b.combatPts !== a.combatPts ? b.combatPts - a.combatPts : a.name.localeCompare(b.name));
+
+  // Assign provisional ranks
+  let html = '<div class="fyr-summary-grid">';
+  filled.forEach((r, i) => {
+    const band = getLadderBand(r.total);
+    const rankColor = i < 4 ? 'var(--vanguard)' : i < 8 ? 'var(--teal)' : i < 11 ? 'var(--purple)' : 'var(--red)';
+    html += `<div class="fyr-summary-card">
+      <div>
+        <div class="fyr-summary-name" style="color:${rankColor}">${r.name}</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim)">${r.total}pts · ${band.split('(')[0].trim()}</div>
+      </div>
+      <div class="fyr-summary-rank" style="color:${rankColor}">${i+1}</div>
+    </div>`;
+  });
+  html += '</div>';
+
+  const unfilled = results.filter(r => !r.allFilled);
+  if (unfilled.length) html += `<div style="color:var(--text-dim);font-size:11px;font-family:'Share Tech Mono',monospace;margin-top:12px;letter-spacing:1px">Missing rolls: ${unfilled.map(r=>r.name).join(', ')}</div>`;
+
+  summaryEl.innerHTML = html;
+}
+
+function applyAllResults() {
+  const npcTeams = TEAMS_DEFAULT.filter(t => t.id !== 't15' && NPC_PROFILES[t.id]);
+  const results = [];
+
+  npcTeams.forEach(team => {
+    const rolls = state.fyrRolls[team.id] || {};
+    const profile = getTeamProfile(team.id);
+    const tierMod = TIER_MODIFIER[team.startTier] || 0;
+    let total = 0; let allFilled = true;
+    CATEGORIES.forEach(cat => {
+      const roll = rolls[cat];
+      if (roll === undefined || roll === '' || isNaN(roll)) { allFilled = false; return; }
+      total += getOutcome(parseInt(roll), BASE_DC[cat], getDCModifier(profile[cat]), -tierMod).points;
+    });
+    if (allFilled) {
+      const combatPts = getOutcome(parseInt(rolls.combat||0), BASE_DC.combat, getDCModifier(profile.combat), -tierMod).points;
+      results.push({ id:team.id, total, combatPts });
+    }
+  });
+
+  if (!results.length) { alert('No complete rolls to apply.'); return; }
+
+  results.sort((a,b) => b.total !== a.total ? b.total - a.total : b.combatPts - a.combatPts);
+  results.forEach((r,i) => { state.teams[r.id].rank = i+1; state.teams[r.id].ladderScore = Math.round((r.total/20)*100); });
+  saveState(); renderLadder();
+  alert(`Applied! ${results.length} teams ranked. Switch back to the tracker to see the updated Ladder.`);
+  showPage('tracker');
+}
+
+function clearAllRolls() {
+  if (!confirm('Clear all First Year Roll data?')) return;
+  state.fyrRolls = {}; saveState(); renderFYRPage();
+}
+
+// ════════════════════════════════════════════
+//  EXPORT + RESET
+// ════════════════════════════════════════════
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=`agca_tracker_week${state.week}.json`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function resetAll() {
+  if (!confirm('Reset ALL tracker data? This cannot be undone.')) return;
+  localStorage.removeItem('agca_tracker_v3');
+  localStorage.removeItem('agca_tracker_v2');
+  location.reload();
+}
+
+// ════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════
+
+function init() {
+  loadState();
+  document.getElementById('week-display').textContent = state.week;
+  document.getElementById('tournament-badge').classList.toggle('active', state.tournamentActive);
+  calculateLadder();
+}
+
+init();
+</script>
+</body>
+</html>

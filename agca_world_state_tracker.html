@@ -1,0 +1,1788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AGCA — World State</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@200;300;400;600&display=swap');
+
+  :root {
+    --bg:        #0a0c10;
+    --surface:   #111620;
+    --surface2:  #181f2e;
+    --surface3:  #1e2840;
+    --border:    #2a3550;
+    --border2:   #3a4a6a;
+    --teal:      #4fc3c8;
+    --teal-dim:  #2a7a7e;
+    --amber:     #e8a830;
+    --amber-dim: #7a5510;
+    --red:       #e84040;
+    --red-dim:   #5a1818;
+    --green:     #50c878;
+    --green-dim: #1a4a28;
+    --purple:    #9b6bff;
+    --purple-dim:#3a1a7a;
+    --orange:    #ff8c42;
+    --orange-dim:#6a3010;
+    --text:      #c8d8f0;
+    --text-dim:  #5a7090;
+    --text-mid:  #8aa0c0;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Exo 2', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+  }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* ── HEADER ── */
+  #header {
+    position: sticky; top: 0; z-index: 100;
+    background: linear-gradient(180deg, var(--bg) 0%, rgba(10,12,16,0.95) 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex; align-items: center; gap: 16px;
+    backdrop-filter: blur(8px);
+  }
+
+  #header h1 {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 22px; font-weight: 700;
+    letter-spacing: 4px; text-transform: uppercase;
+    color: var(--red);
+  }
+
+  .header-sub {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px; letter-spacing: 3px;
+    color: var(--text-dim); text-transform: uppercase;
+  }
+
+  .header-divider { width:1px; height:32px; background:var(--border); }
+
+  .nav-link {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 12px; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase;
+    padding: 5px 12px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: all 0.15s;
+  }
+  .nav-link:hover { color: var(--teal); border-color: var(--teal-dim); }
+  .nav-link.active { color: var(--red); border-color: var(--red-dim); background: rgba(232,64,64,0.08); }
+
+  .week-display-small {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px; color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  .header-right { margin-left:auto; display:flex; gap:8px; align-items:center; }
+
+  .btn {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase;
+    padding: 6px 14px;
+    border: 1px solid var(--border2);
+    background: var(--surface2);
+    color: var(--text-mid);
+    cursor: pointer; border-radius: 3px;
+    transition: all 0.15s;
+  }
+  .btn:hover { border-color: var(--teal); color: var(--teal); background: rgba(79,195,200,0.08); }
+  .btn.primary { border-color: var(--teal-dim); background: rgba(79,195,200,0.12); color: var(--teal); }
+  .btn.primary:hover { background: rgba(79,195,200,0.22); }
+  .btn.danger { border-color: var(--red-dim); color: var(--red); background: rgba(232,64,64,0.08); }
+  .btn.danger:hover { background: rgba(232,64,64,0.18); }
+  .btn.small { font-size:11px; padding:3px 8px; }
+  .btn.amber { border-color:var(--amber-dim); color:var(--amber); background:rgba(232,168,48,0.08); }
+  .btn.amber:hover { background:rgba(232,168,48,0.18); }
+  .btn.purple { border-color:var(--purple-dim); color:var(--purple); background:rgba(155,107,255,0.08); }
+  .btn.purple:hover { background:rgba(155,107,255,0.18); }
+
+  /* ── LAYOUT ── */
+  #app {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    height: calc(100vh - 57px);
+  }
+
+  /* ── SIDEBAR NAV ── */
+  #sidebar {
+    border-right: 1px solid var(--border);
+    background: var(--surface);
+    overflow-y: auto;
+    display: flex; flex-direction: column;
+  }
+
+  .sidebar-section {
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-section-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px; letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 8px 14px 4px;
+  }
+
+  .sidebar-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: background 0.1s;
+    position: relative;
+  }
+  .sidebar-item:hover { background: var(--surface2); }
+  .sidebar-item.active { background: var(--surface3); }
+  .sidebar-item.active::before {
+    content: '';
+    position: absolute; left:0; top:0; bottom:0;
+    width: 3px;
+  }
+
+  /* Accent colors by category */
+  .cat-conspiracy.active::before { background: var(--red); }
+  .cat-npc.active::before        { background: var(--amber); }
+  .cat-core.active::before       { background: var(--purple); }
+  .cat-faction.active::before    { background: var(--orange); }
+  .cat-event.active::before      { background: var(--teal); }
+  .cat-custom.active::before     { background: var(--green); }
+
+  .sidebar-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .cat-conspiracy .sidebar-dot { background: var(--red); }
+  .cat-npc .sidebar-dot        { background: var(--amber); }
+  .cat-core .sidebar-dot       { background: var(--purple); }
+  .cat-faction .sidebar-dot    { background: var(--orange); }
+  .cat-event .sidebar-dot      { background: var(--teal); }
+  .cat-custom .sidebar-dot     { background: var(--green); }
+
+  .sidebar-label {
+    font-family: 'Exo 2', sans-serif;
+    font-size: 13px; font-weight: 400;
+    flex: 1; min-width: 0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .sidebar-clock-mini {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px; color: var(--text-dim);
+  }
+
+  .sidebar-add-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 14px;
+    cursor: pointer;
+    color: var(--text-dim);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 1px;
+    transition: color 0.1s;
+  }
+  .sidebar-add-btn:hover { color: var(--teal); }
+
+  /* ── MAIN CONTENT ── */
+  #main {
+    overflow-y: auto;
+    background: var(--bg);
+  }
+
+  /* Empty state */
+  #empty-state {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    height: 100%;
+    color: var(--text-dim); gap: 12px;
+  }
+  .empty-icon { font-size: 48px; opacity: 0.3; }
+  .empty-text {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px; letter-spacing: 2px;
+    text-transform: uppercase; opacity: 0.5;
+  }
+
+  /* Entry detail */
+  #entry-detail { display: none; }
+
+  /* ── ENTRY HEADER ── */
+  .entry-header {
+    padding: 20px 28px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .entry-header-row {
+    display: flex; align-items: flex-start; gap: 12px;
+  }
+
+  .entry-category-badge {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 2px;
+    margin-top: 4px; flex-shrink: 0;
+  }
+  .badge-conspiracy { color:var(--red);    background:rgba(232,64,64,0.12);    border:1px solid rgba(232,64,64,0.2); }
+  .badge-npc        { color:var(--amber);  background:rgba(232,168,48,0.12);   border:1px solid rgba(232,168,48,0.2); }
+  .badge-core       { color:var(--purple); background:rgba(155,107,255,0.12);  border:1px solid rgba(155,107,255,0.2); }
+  .badge-faction    { color:var(--orange); background:rgba(255,140,66,0.12);   border:1px solid rgba(255,140,66,0.2); }
+  .badge-event      { color:var(--teal);   background:rgba(79,195,200,0.12);   border:1px solid rgba(79,195,200,0.2); }
+  .badge-custom     { color:var(--green);  background:rgba(80,200,120,0.12);   border:1px solid rgba(80,200,120,0.2); }
+
+  .entry-name-input {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 26px; font-weight: 700;
+    background: transparent; border: none; outline: none;
+    color: var(--text); flex: 1;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.15s;
+    padding-bottom: 2px;
+  }
+  .entry-name-input:focus { border-bottom-color: var(--border2); }
+  .entry-name-input::placeholder { color: var(--text-dim); }
+
+  /* ── SECTIONS ── */
+  .section {
+    padding: 20px 28px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 12px; font-weight: 700;
+    letter-spacing: 3px; text-transform: uppercase;
+    color: var(--text-dim); margin-bottom: 14px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-title::after {
+    content:''; flex:1; height:1px; background:var(--border);
+  }
+  .section-title .title-action {
+    font-size: 11px; font-weight: 600;
+    cursor: pointer; color: var(--text-dim);
+    transition: color 0.1s; margin-left: 4px;
+    letter-spacing: 1px;
+  }
+  .section-title .title-action:hover { color: var(--teal); }
+
+  /* ── PROGRESS CLOCK ── */
+  .main-clock {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 20px;
+    margin-bottom: 8px;
+  }
+
+  .main-clock-header {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+  }
+
+  .main-clock-name {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px; font-weight: 600;
+    flex: 1;
+    background: transparent; border: none; outline: none;
+    color: var(--text);
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.15s;
+  }
+  .main-clock-name:focus { border-bottom-color: var(--border2); }
+
+  .clock-pct {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 20px; font-weight: 700;
+    min-width: 56px; text-align: right;
+  }
+
+  .clock-row {
+    display: flex; gap: 4px;
+  }
+
+  .ws-segment {
+    height: 24px; flex: 1; min-width: 20px;
+    border-radius: 2px;
+    cursor: pointer;
+    border: 1px solid var(--border2);
+    background: var(--surface3);
+    transition: background 0.1s, border-color 0.1s, box-shadow 0.1s, opacity 0.1s;
+  }
+  .ws-segment.filled { border-color: transparent; }
+  .ws-segment.filled:hover { opacity: 0.55; }
+
+  /* Color by category — cat class is on the segment itself */
+  .ws-segment.cat-conspiracy:hover:not(.filled)  { border-color:var(--red);    background:rgba(232,64,64,0.2); }
+  .ws-segment.cat-npc:hover:not(.filled)         { border-color:var(--amber);  background:rgba(232,168,48,0.2); }
+  .ws-segment.cat-core:hover:not(.filled)        { border-color:var(--purple); background:rgba(155,107,255,0.2); }
+  .ws-segment.cat-faction:hover:not(.filled)     { border-color:var(--orange); background:rgba(255,140,66,0.2); }
+  .ws-segment.cat-event:hover:not(.filled)       { border-color:var(--teal);   background:rgba(79,195,200,0.2); }
+  .ws-segment.cat-custom:hover:not(.filled)      { border-color:var(--green);  background:rgba(80,200,120,0.2); }
+
+  .ws-segment.cat-conspiracy.filled  { background:var(--red);    box-shadow:0 0 6px rgba(232,64,64,0.35); }
+  .ws-segment.cat-npc.filled         { background:var(--amber);  box-shadow:0 0 6px rgba(232,168,48,0.35); }
+  .ws-segment.cat-core.filled        { background:var(--purple); box-shadow:0 0 6px rgba(155,107,255,0.35); }
+  .ws-segment.cat-faction.filled     { background:var(--orange); box-shadow:0 0 6px rgba(255,140,66,0.35); }
+  .ws-segment.cat-event.filled       { background:var(--teal);   box-shadow:0 0 6px rgba(79,195,200,0.35); }
+  .ws-segment.cat-custom.filled      { background:var(--green);  box-shadow:0 0 6px rgba(80,200,120,0.35); }
+
+  .clock-caption {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px; color: var(--text-dim);
+    margin-top: 6px; letter-spacing: 1px;
+  }
+
+  .complete-badge {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px; letter-spacing: 2px;
+    color: var(--green);
+    margin-top: 6px;
+  }
+
+  /* ── STATUS SELECT ── */
+  .status-row {
+    display: flex; gap: 8px; align-items: center; margin-bottom: 16px;
+  }
+
+  .status-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text-dim); min-width: 60px;
+  }
+
+  .status-select {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px; letter-spacing: 1px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-mid);
+    padding: 4px 8px; border-radius: 3px;
+    cursor: pointer; outline: none;
+  }
+  .status-select:focus { border-color: var(--teal-dim); }
+
+  .status-dormant   { color: var(--text-dim); }
+  .status-active    { color: var(--teal); }
+  .status-hot       { color: var(--amber); }
+  .status-critical  { color: var(--red); }
+  .status-resolved  { color: var(--green); }
+
+  /* ── INVESTIGATORS / CONNECTIONS ── */
+  .tag-list {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;
+  }
+
+  .tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px; letter-spacing: 1px;
+    padding: 3px 8px; border-radius: 2px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-mid);
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .tag .tag-remove {
+    cursor: pointer; color: var(--text-dim);
+    transition: color 0.1s; font-size: 11px;
+  }
+  .tag .tag-remove:hover { color: var(--red); }
+
+  .tag-input-row {
+    display: flex; gap: 6px;
+  }
+
+  .tag-input {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 5px 8px; border-radius: 3px;
+    outline: none; flex: 1;
+    transition: border-color 0.15s;
+  }
+  .tag-input:focus { border-color: var(--teal-dim); }
+  .tag-input::placeholder { color: var(--text-dim); }
+
+  /* ── NOTES / TEXT AREAS ── */
+  .notes-area {
+    width: 100%; min-height: 100px;
+    font-family: 'Exo 2', sans-serif;
+    font-size: 13px; font-weight: 300;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 14px; border-radius: 3px;
+    outline: none; resize: vertical; line-height: 1.6;
+  }
+  .notes-area:focus { border-color: var(--teal-dim); }
+  .notes-area::placeholder { color: var(--text-dim); }
+
+  .notes-area.small { min-height: 60px; }
+
+  /* ── SESSION LOG ── */
+  .session-entry {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+
+  .session-week-tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px; color: var(--text-dim);
+    letter-spacing: 1px; min-width: 50px;
+    margin-top: 2px;
+  }
+
+  .session-text {
+    flex: 1;
+    font-size: 13px; color: var(--text); line-height: 1.5;
+  }
+
+  .add-session-row {
+    display: flex; gap: 8px; margin-top: 8px;
+  }
+
+  /* ── EVENT QUEUE ── */
+  .event-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--teal);
+    border-radius: 0 4px 4px 0;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+
+  .event-item.overdue { border-left-color: var(--red); }
+  .event-item.soon    { border-left-color: var(--amber); }
+  .event-item.done    { border-left-color: var(--green); opacity: 0.5; }
+
+  .event-week {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px; min-width: 50px;
+    margin-top: 2px;
+  }
+
+  .event-week.overdue { color: var(--red); }
+  .event-week.soon    { color: var(--amber); }
+  .event-week.done    { color: var(--green); }
+  .event-week.future  { color: var(--text-dim); }
+
+  .event-content { flex: 1; }
+
+  .event-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px; font-weight: 600;
+    margin-bottom: 2px;
+    background: transparent; border: none; outline: none;
+    color: var(--text); width: 100%;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.15s;
+  }
+  .event-title:focus { border-bottom-color: var(--border2); }
+
+  .event-desc {
+    font-size: 12px; color: var(--text-dim);
+    line-height: 1.4;
+    background: transparent; border: none; outline: none;
+    color: var(--text-mid); width: 100%;
+    resize: none; font-family: 'Exo 2', sans-serif;
+    font-size: 12px; font-weight: 300;
+  }
+
+  .event-week-input {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    color: var(--text-mid);
+    padding: 2px 6px; border-radius: 2px;
+    width: 50px; text-align: center;
+    outline: none;
+  }
+
+  .add-event-form {
+    display: grid;
+    grid-template-columns: 60px 1fr auto;
+    gap: 8px; align-items: center;
+    margin-top: 12px;
+    padding: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+
+  /* ── NPC RELATIONSHIP METER ── */
+  .npc-meter-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .npc-meter-name {
+    font-family: 'Exo 2', sans-serif;
+    font-size: 13px; min-width: 120px;
+    background: transparent; border: none; outline: none;
+    color: var(--text);
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.15s;
+  }
+  .npc-meter-name:focus { border-bottom-color: var(--border2); }
+
+  .meter-track {
+    display: flex; gap: 2px; flex: 1;
+  }
+
+  .meter-pip {
+    height: 12px; flex: 1;
+    border-radius: 1px;
+    cursor: pointer;
+    border: 1px solid var(--border2);
+    background: var(--surface3);
+    transition: all 0.1s;
+  }
+  .meter-pip:hover { border-color: var(--amber); }
+  .meter-pip.filled { background: var(--amber); border-color: transparent; }
+  .meter-pip.filled:hover { opacity: 0.6; }
+
+  .meter-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px; color: var(--text-dim);
+    min-width: 80px; text-align: right;
+    letter-spacing: 1px;
+  }
+
+  /* ── TEXT INPUT ── */
+  .text-input {
+    font-family: 'Exo 2', sans-serif;
+    font-size: 13px; font-weight: 300;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 10px; border-radius: 3px;
+    outline: none; transition: border-color 0.15s;
+  }
+  .text-input:focus { border-color: var(--teal-dim); }
+  .text-input::placeholder { color: var(--text-dim); }
+
+  /* ── CORE SPECIAL SECTION ── */
+  .core-phase {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .core-phase.active {
+    border-color: var(--purple-dim);
+    box-shadow: inset 0 0 20px rgba(155,107,255,0.05);
+  }
+
+  .core-phase-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--purple); margin-bottom: 6px;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .core-phase-name {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16px; font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .core-phase-desc {
+    font-size: 12px; color: var(--text-mid);
+    line-height: 1.5; margin-bottom: 10px;
+  }
+
+  .phase-active-indicator {
+    display: inline-block;
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--purple);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* ── GRID LAYOUT FOR CONTENT ── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  /* ── DELETE ENTRY ── */
+  .delete-entry-btn {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase;
+    padding: 4px 10px;
+    border: 1px solid var(--red-dim);
+    background: rgba(232,64,64,0.06);
+    color: var(--red); cursor: pointer; border-radius: 3px;
+    transition: all 0.15s; margin-left: auto;
+  }
+  .delete-entry-btn:hover { background: rgba(232,64,64,0.18); }
+
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="header">
+  <h1>AGCA</h1>
+  <span class="header-sub">World State</span>
+  <div class="header-divider"></div>
+  <nav style="display:flex;gap:4px">
+    <a class="nav-link" href="AGCA_Tracker_v2.html">Team Tracker</a>
+    <a class="nav-link active" href="AGCA_World_State.html">World State</a>
+  </nav>
+  <div class="header-divider"></div>
+  <span class="week-display-small" id="week-label">WEEK 1</span>
+  <div style="display:flex;gap:4px">
+    <button class="btn small" onclick="changeWeek(-1)">−</button>
+    <button class="btn small" onclick="changeWeek(1)">+</button>
+  </div>
+  <div class="header-right">
+    <button class="btn small" onclick="dismissAllAlerts()" style="color:var(--text-dim)">Dismiss Alerts</button>
+    <button class="btn amber" onclick="const n=runAllCascades();save();renderSidebar();renderAlertBanner();if(state.selectedId)renderEntry(state.selectedId);">⟳ Sync</button>
+    <button class="btn" onclick="exportData()">Export</button>
+    <button class="btn danger" onclick="resetAll()">Reset All</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Conspiracy Threads</div>
+      <div id="sidebar-conspiracy"></div>
+      <div class="sidebar-add-btn" onclick="addEntry('conspiracy')">+ Add Thread</div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">NPC Agendas</div>
+      <div id="sidebar-npc"></div>
+      <div class="sidebar-add-btn" onclick="addEntry('npc')">+ Add Agenda</div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">The Core</div>
+      <div id="sidebar-core"></div>
+      <div class="sidebar-add-btn" onclick="addEntry('core')">+ Add Entry</div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Factions</div>
+      <div id="sidebar-faction"></div>
+      <div class="sidebar-add-btn" onclick="addEntry('faction')">+ Add Faction</div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Event Queue</div>
+      <div id="sidebar-event"></div>
+      <div class="sidebar-add-btn" onclick="addEntry('event')">+ Add Event</div>
+    </div>
+
+    <div class="sidebar-section" style="border-bottom:none">
+      <div class="sidebar-section-label">Custom</div>
+      <div id="sidebar-custom"></div>
+      <div class="sidebar-add-btn" onclick="addEntry('custom')">+ Add Custom</div>
+    </div>
+
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+    <div id="empty-state">
+      <div class="empty-icon">⬡</div>
+      <div class="empty-text">Select an entry to begin</div>
+    </div>
+    <div id="entry-detail"></div>
+  </div>
+
+</div>
+
+<script>
+// ════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════
+
+const CATEGORY_COLORS = {
+  conspiracy: 'red', npc: 'amber', core: 'purple',
+  faction: 'orange', event: 'teal', custom: 'green'
+};
+
+const METER_LABELS = {
+  5: ['Unaware','Peripheral','Suspicious','Convinced','Acting'],
+  10: ['0','1','2','3','4','5','6','7','8','9','10'],
+};
+
+const DEFAULT_ENTRIES = [
+  // Conspiracy threads
+  {
+    id:'c1', category:'conspiracy', name:"Angels' Cheating Program",
+    status:'active', progress:{ total:8, filled:2 },
+    progressLabel:'Discovery Progress',
+    investigators:['Alpha (Blade & Claw)','Binary Kill','Serrano (vague)'],
+    connections:['Lev Okafor','Highness','Arena Management System'],
+    notes:'Angels rotate methods — never the same tactic twice in a row. Occasionally fix odds in others\' favor to obscure pattern. Three components: Lev\'s diagnostic intel, arena interference, misdirection layer.\n\nBinary Kill is ~2 steps from Lev\'s activity logs. Alpha studying footage, has suspicion but no proof.',
+    sessionLog:[],
+  },
+  {
+    id:'c2', category:'conspiracy', name:'Project Chimera / The Core',
+    status:'active', progress:{ total:12, filled:3 },
+    progressLabel:'Player Proximity to Discovery',
+    investigators:['Binary Kill (power draw)','Prophet (sim logs)','Skipper (behavioral notes)'],
+    connections:['Kaelen Arcturus','Dr. Aris Thorne','Hangar Bay 5','Vanguard Briefings'],
+    notes:'Three converging paths: BK power draw anomaly, Prophet simulation logs, Skipper\'s notebook. None connected yet.\n\nGrand Final plan: Nexus Squadron (Core-controlled Automata) unveiled as opponent. Four phases of escalation. Phase 4 = Core exceeds safety parameters.',
+    sessionLog:[],
+  },
+  {
+    id:'c3', category:'conspiracy', name:"Lev Okafor",
+    status:'active', progress:{ total:6, filled:1 },
+    progressLabel:'Exposure Risk',
+    investigators:['Binary Kill (approaching)'],
+    connections:["Angels' Cheating Program",'Data Dee','Intermediary (unnamed)'],
+    notes:'Junior data analyst in Data Dee\'s office. Selling pre-match diagnostic telemetry. Doesn\'t know buyer is Angels — works through intermediary.\n\nMotivation: younger sibling on colonial world with expensive medical condition. Told himself a story about "consulting."\n\nData Dee does not know. Will not rage when told — will run numbers again, then go silent, then file most devastating incident report the academy has ever received.',
+    sessionLog:[],
+  },
+
+  // NPC Agendas
+  {
+    id:'n1', category:'npc', name:'Binary Kill — The Investigation',
+    status:'active', progress:{ total:8, filled:3 },
+    progressLabel:'Investigation Progress',
+    investigators:['Banshee (lead)','AxeWound (technical)'],
+    connections:['Mourning (aware, not stopping them)','Lev Okafor (2 steps away)','Power Draw Anomaly'],
+    notes:'Have mapped power draw anomaly at sub-level 2. Looking at data architecture broadly. Currently ~2 steps from Lev\'s activity logs.\n\nWill find Angels\' cheating operation BEFORE finding Chimera. What they do with cheating evidence is undecided — they could use it as leverage, expose it, or follow it deeper.',
+    sessionLog:[],
+  },
+  {
+    id:'n2', category:'npc', name:"Prophet — The Intuition",
+    status:'active', progress:{ total:6, filled:2 },
+    progressLabel:'Approach to Discovery',
+    investigators:['Prophet (solo)'],
+    connections:['The Core','Crucible Simulation Logs','Hangar Bay 5'],
+    notes:'Tracking Crucible simulation log anomalies. 4 weeks of data. Working hypothesis directionally correct — thinks something in the building has achieved human-machine integration. Missing one piece to confirm.\n\nApproaching The Core from the data side. Doesn\'t know what generates the anomalies. Will find it the way a scientist finds something real — with excitement of discovery.',
+    sessionLog:[],
+  },
+  {
+    id:'n3', category:'npc', name:"Skipper's Notebook",
+    status:'active', progress:{ total:6, filled:2 },
+    progressLabel:'Evidence Accumulation',
+    investigators:['Skipper (Golden Oldies)'],
+    connections:['Vanguard Briefings','Project Chimera','Post-briefing behavioral changes'],
+    notes:'14 notebook entries on post-Vanguard-briefing behavioral changes. Key observation: pilots come back MORE CERTAIN — not more confident, more certain. Like a carried question got answered.\n\nSpecific entry: "Ace asked about night maintenance schedule last week. After the briefing he stopped. He\'s not the type to stop."\n\nNeeds someone to contextualize what he\'s seeing. Card game with Boss is most likely player access point.',
+    sessionLog:[],
+  },
+  {
+    id:'n4', category:'npc', name:"Alpha's Footage Study",
+    status:'active', progress:{ total:4, filled:1 },
+    progressLabel:'Suspicion Crystallization',
+    investigators:['Alpha (Blade & Claw)'],
+    connections:["Angels' Cheating Program",'Platinum Angels','Highness'],
+    notes:'6 weeks of Angels footage review. Identified absence of a moment she\'s looking for: what they do when something goes wrong. Too clean. Wants to Challenge Match them not to win but to see what they do when the plan breaks.\n\nHasn\'t filed the challenge yet. Not ready. Still watching.\n\nSecondary: growing suspicion that their preparation is more complete than training hours explain. No theory yet. Has a feeling.',
+    sessionLog:[],
+  },
+  {
+    id:'n5', category:'npc', name:"Voss's Quiet Suspicion",
+    status:'dormant', progress:{ total:6, filled:2 },
+    progressLabel:'Readiness to Act',
+    investigators:['Voss (self)'],
+    connections:['Kaelen Arcturus','Platinum Angels match record','Year 10 incident'],
+    notes:'Has questions he hasn\'t asked. Has been at the academy since the beginning. The Year 10 briefing changed something.\n\nPrivate conviction: the academy failed Balgaard in specific preventable ways. Has never said this publicly. Would say it directly if asked directly.\n\nThird consecutive Platinum Angels title would be "the most suspicious thing the academy has produced since Year 10."',
+    sessionLog:[],
+  },
+
+  // The Core
+  {
+    id:'core1', category:'core', name:'The Core — Training Status',
+    status:'active', progress:{ total:16, filled:4 },
+    progressLabel:'Training Completion (toward Grand Final)',
+    investigators:[],
+    connections:['Nexus Point (4 pilots)','Dr. Aris Thorne','Invitational Telemetry','Vanguard Briefings'],
+    notes:'Four Nexus Point pilots integrated into wetware combat computer. Training via Invitational telemetry — genuine high-stakes matches produce neural states ordinary training cannot replicate.\n\nGrand Final deployment: 4 phases\n• Phase 1: Perfect synchronization — acts as one, no wasted motion\n• Phase 2: Adaptive response — modeled specific player patterns against them\n• Phase 3: System corruption — HORUS-adjacent viral logic vs player NHPs\n• Phase 4: Escalation — exceeds safety parameters (if reached)\n\nArcuturus datapad shows biometric telemetry aggregated from all pilots during every match.',
+    sessionLog:[],
+  },
+  {
+    id:'core2', category:'core', name:'Vanguard Briefing Program',
+    status:'active', progress:{ total:8, filled:5 },
+    progressLabel:'Pilot Modifications Completed',
+    investigators:[],
+    connections:['Kaelen Arcturus','Dr. Aris Thorne','Top-tier teams','Skipper\'s Notebook'],
+    notes:'Vanguard briefings include undisclosed neural calibration component — framed as "advanced tactical integration." More intensive than disclosed. Produces: increased certainty, decreased questioning, neural signature alteration.\n\nMakes pilots better data sources for The Core. Makes them marginally more compliant.\n\nNobody who has attended reports feeling anything unusual. The modification is subtle. Thorne has been refining it for 6 years.',
+    sessionLog:[],
+  },
+
+  // Factions
+  {
+    id:'f1', category:'faction', name:"Balgaard's Long Game",
+    status:'dormant', progress:{ total:8, filled:2 },
+    progressLabel:"Patience Clock (toward revelation)",
+    investigators:[],
+    connections:['Black Sun\'s Zenith','Year 6 departure (classified)','Two recent graduates in Zenith','Callum Verne'],
+    notes:'Has never targeted ADS assets despite resources to do so. Keeps tabs on current AGCA cohort.\n\nTwo recent graduates identified as mid-level Zenith commanders. Connection not officially acknowledged.\n\nWhat he\'s waiting for: [GM DECISION]\n• Knows about Chimera, waiting for it to surface publicly\n• Waiting for Arcturus to overextend\n• Wants someone inside to find what he found\n• Needs AGCA disruption as component of Outer Rim strategy',
+    sessionLog:[],
+  },
+  {
+    id:'f2', category:'faction', name:'Dragon Twins — Consolidation',
+    status:'active', progress:{ total:10, filled:4 },
+    progressLabel:'Outer Rim Consolidation Progress',
+    investigators:[],
+    connections:['Effenzor Shalabastis','Ala\'Jestria Shalabastis','Outer Rim private armies','Emperor Varos / Calyx Prime'],
+    notes:'Currently ~4 years into consolidation timeline. Engineering absorption of scattered outer rim private armies into single corporate entity.\n\nEffenzor: manages public face, messaging, mythology. The movement has an aesthetic and narrative arc that sounds like liberation, structured toward concentrated power.\n\nAla\'Jestria: commands military operations. Has fought alongside armies she\'s absorbing to understand them.\n\nADS commercial arrangements with Calyx Prime (from enrollment) now renegotiable from opposite side of table. Will happen. When it does, whoever manages ADS\'s relationship with Calyx Prime should have thought about it.',
+    sessionLog:[],
+  },
+  {
+    id:'f3', category:'faction', name:'ADS Board — Awareness Level',
+    status:'dormant', progress:{ total:6, filled:1 },
+    progressLabel:'Board Knowledge of Chimera',
+    investigators:[],
+    connections:['Kaelen Arcturus','ADS Board (7 members)','Project Chimera','Late-game resource'],
+    notes:'Board has genuine oversight of commercial operations but NO visibility into Project Chimera. Has approved "long-term strategic research" capital allocation without line-item detail.\n\nIf informed: which members can be trusted vs. too commercially invested is the key question. Late-game resource — players who find a way to inform credible board members have institutional lever that isn\'t just "stop Arcturus personally."',
+    sessionLog:[],
+  },
+
+  // Events
+  {
+    id:'e1', category:'event', name:'Next Vanguard Briefing',
+    status:'active', scheduledWeek: 3,
+    notes:'Affects top 4 teams. Includes undisclosed neural calibration. Skipper will observe who attends and note behavioral changes after.',
+    progress:{ total:1, filled:0 }, progressLabel:'',
+    investigators:[], connections:[], sessionLog:[],
+  },
+  {
+    id:'e2', category:'event', name:'Binary Kill: Next Data Probe',
+    status:'active', scheduledWeek: 4,
+    notes:'Banshee\'s scheduled attempt to go deeper into the academy\'s data architecture. If not interrupted, moves their investigation clock forward.',
+    progress:{ total:1, filled:0 }, progressLabel:'',
+    investigators:[], connections:[], sessionLog:[],
+  },
+  {
+    id:'e3', category:'event', name:'Grand Final — Nexus Squadron Reveal',
+    status:'dormant', scheduledWeek: 0,
+    notes:'Tournament Week 7+. Arcturus\'s planned unveiling of Core-controlled Automata as opposing team. Set week when bracket reaches Grand Final.',
+    progress:{ total:1, filled:0 }, progressLabel:'',
+    investigators:[], connections:[], sessionLog:[],
+  },
+];
+
+let state = {
+  week: 1,
+  entries: {},
+  selectedId: null,
+  npcMeters: {},
+  syncState: {
+    lastMatchCount: 0,       // matches seen on last sync
+    lastVanguardCount: 0,    // vanguard briefings seen on last sync
+  },
+  pendingAlerts: [],         // alerts queued for display
+  userLinks: [],             // GM-defined custom links
+};
+
+// ════════════════════════════════════════════
+//  PERSISTENCE
+// ════════════════════════════════════════════
+
+function save() {
+  try { localStorage.setItem('agca_world_v2', JSON.stringify(state)); } catch(e) {}
+}
+
+function load() {
+  try {
+    const saved = localStorage.getItem('agca_world_v2');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      state = { ...state, ...parsed };
+    }
+  } catch(e) {}
+
+  // Seed defaults if empty
+  if (!Object.keys(state.entries).length) {
+    DEFAULT_ENTRIES.forEach(e => {
+      state.entries[e.id] = { ...e };
+    });
+  }
+
+  // Ensure cascade tracking fields exist
+  if (!state.syncState) state.syncState = { lastMatchCount: 0, lastVanguardCount: 0 };
+  if (!state.pendingAlerts) state.pendingAlerts = [];
+  if (!state.userLinks) state.userLinks = [];
+}
+
+// ════════════════════════════════════════════
+//  WEEK
+// ════════════════════════════════════════════
+
+function changeWeek(d) {
+  state.week = Math.max(1, state.week + d);
+  document.getElementById('week-label').textContent = `WEEK ${state.week}`;
+  save();
+  renderSidebar();
+  if (state.selectedId) renderEntry(state.selectedId);
+}
+
+// ════════════════════════════════════════════
+//  SIDEBAR
+// ════════════════════════════════════════════
+
+const CATEGORIES = ['conspiracy','npc','core','faction','event','custom'];
+
+function renderSidebar() {
+  CATEGORIES.forEach(cat => {
+    const el = document.getElementById(`sidebar-${cat}`);
+    if (!el) return;
+    const entries = Object.values(state.entries).filter(e => e.category === cat);
+    el.innerHTML = entries.map(e => {
+      const filled = e.progress?.filled || 0;
+      const total  = e.progress?.total  || 1;
+      const pct    = Math.round((filled/total)*100);
+      const isSelected = state.selectedId === e.id;
+
+      // Event: check timing
+      let weeksLabel = '';
+      if (cat === 'event' && e.scheduledWeek) {
+        const diff = e.scheduledWeek - state.week;
+        if (diff < 0) weeksLabel = '⚠ OVERDUE';
+        else if (diff === 0) weeksLabel = '● THIS WEEK';
+        else weeksLabel = `Wk${e.scheduledWeek}`;
+      } else {
+        weeksLabel = `${filled}/${total}`;
+      }
+
+      return `<div class="sidebar-item cat-${cat} ${isSelected ? 'active' : ''}" onclick="selectEntry('${e.id}')">
+        <div class="sidebar-dot"></div>
+        <div class="sidebar-label">${e.name || 'Unnamed'}</div>
+        <div class="sidebar-clock-mini">${weeksLabel}</div>
+      </div>`;
+    }).join('');
+  });
+}
+
+// ════════════════════════════════════════════
+//  SELECT & RENDER ENTRY
+// ════════════════════════════════════════════
+
+function selectEntry(id) {
+  state.selectedId = id;
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('entry-detail').style.display = 'block';
+  renderSidebar();
+  renderEntry(id);
+}
+
+function renderEntry(id) {
+  const e = state.entries[id];
+  if (!e) return;
+  const cat = e.category;
+  const color = CATEGORY_COLORS[cat];
+
+  const badgeClass = `badge-${cat}`;
+  const catLabel = { conspiracy:'Conspiracy', npc:'NPC Agenda', core:'The Core',
+                     faction:'Faction', event:'Scheduled Event', custom:'Custom' }[cat];
+
+  // Status
+  const statuses = ['dormant','active','hot','critical','resolved'];
+  const statusOpts = statuses.map(s =>
+    `<option value="${s}" ${e.status===s?'selected':''}>${s.toUpperCase()}</option>`
+  ).join('');
+
+  const statusColor = {
+    dormant:'var(--text-dim)', active:'var(--teal)', hot:'var(--amber)',
+    critical:'var(--red)', resolved:'var(--green)'
+  }[e.status] || 'var(--text-dim)';
+
+  // Main clock (hide for events with scheduledWeek)
+  const showClock = !(cat === 'event');
+  let clockHtml = '';
+  if (showClock && e.progress) {
+    const filled = e.progress.filled || 0;
+    const total  = e.progress.total  || 8;
+    const pct    = Math.round((filled/total)*100);
+
+    // Resolve actual CSS color values for this category
+    const catColors = {
+      conspiracy: { fill:'#e84040', glow:'rgba(232,64,64,0.35)', hover:'rgba(232,64,64,0.2)', border:'#e84040' },
+      npc:        { fill:'#e8a830', glow:'rgba(232,168,48,0.35)', hover:'rgba(232,168,48,0.2)', border:'#e8a830' },
+      core:       { fill:'#9b6bff', glow:'rgba(155,107,255,0.35)', hover:'rgba(155,107,255,0.2)', border:'#9b6bff' },
+      faction:    { fill:'#ff8c42', glow:'rgba(255,140,66,0.35)', hover:'rgba(255,140,66,0.2)', border:'#ff8c42' },
+      event:      { fill:'#4fc3c8', glow:'rgba(79,195,200,0.35)', hover:'rgba(79,195,200,0.2)', border:'#4fc3c8' },
+      custom:     { fill:'#50c878', glow:'rgba(80,200,120,0.35)', hover:'rgba(80,200,120,0.2)', border:'#50c878' },
+    };
+    const cc = catColors[cat] || catColors.custom;
+
+    let segs = '';
+    for (let i = 0; i < total; i++) {
+      const isFilled = i < filled;
+      const style = isFilled
+        ? `background:${cc.fill};border-color:transparent;box-shadow:0 0 6px ${cc.glow};`
+        : `background:var(--surface3);border-color:var(--border2);`;
+      segs += `<div class="ws-segment" style="${style}"
+        onmouseenter="this.style.background='${isFilled ? cc.fill : cc.hover}';this.style.borderColor='${isFilled ? 'transparent' : cc.border}';this.style.opacity='${isFilled ? '0.55' : '1'}';"
+        onmouseleave="this.style.background='${isFilled ? cc.fill : 'var(--surface3)'}';this.style.borderColor='${isFilled ? 'transparent' : 'var(--border2)'}';this.style.opacity='1';"
+        onclick="toggleWsClock('${id}',${i})"
+        title="${isFilled?'Click to empty to here':'Click to fill to here'}"></div>`;
+    }
+
+    const pctColor = pct >= 80 ? 'var(--red)' : pct >= 50 ? 'var(--amber)' : cc.fill;
+    clockHtml = `
+      <div class="main-clock">
+        <div class="main-clock-header">
+          <input class="main-clock-name" value="${e.progressLabel || 'Progress'}"
+            onchange="updateField('${id}','progressLabel',this.value)"
+            placeholder="Clock label...">
+          <div class="clock-pct" style="color:${pctColor}">${pct}%</div>
+        </div>
+        <div class="clock-row">${segs}</div>
+        <div class="clock-caption">${filled} / ${total} segments
+          — <span style="cursor:pointer;color:var(--text-dim)" onclick="resizeClock('${id}')">resize</span>
+        </div>
+        ${pct>=100 ? '<div class="complete-badge">✓ COMPLETE</div>' : ''}
+      </div>`;
+  }
+
+  // Event scheduled week
+  let eventWeekHtml = '';
+  if (cat === 'event') {
+    const sw = e.scheduledWeek || 0;
+    const diff = sw - state.week;
+    const cls = sw === 0 ? '' : diff < 0 ? 'overdue' : diff <= 2 ? 'soon' : '';
+    const label = sw === 0 ? 'UNSCHEDULED' : diff < 0 ? `OVERDUE by ${Math.abs(diff)}wk` : diff === 0 ? 'THIS WEEK' : `In ${diff} weeks`;
+    eventWeekHtml = `
+      <div class="section">
+        <div class="section-title">Scheduling</div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <span class="status-label">WEEK</span>
+          <input type="number" class="event-week-input text-input" value="${sw}"
+            onchange="updateField('${id}','scheduledWeek',parseInt(this.value)||0)"
+            style="width:70px" min="0">
+          <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:${cls==='overdue'?'var(--red)':cls==='soon'?'var(--amber)':'var(--text-dim)'}">${label}</span>
+          <button class="btn small ${cls==='overdue'||cls===''?'':'amber'}" onclick="markEventDone('${id}')">Mark Done</button>
+        </div>
+      </div>`;
+  }
+
+  // Investigators / connections tags
+  const invTags = (e.investigators||[]).map((t,i) =>
+    `<div class="tag">${t}<span class="tag-remove" onclick="removeTag('${id}','investigators',${i})">✕</span></div>`
+  ).join('');
+  const conTags = (e.connections||[]).map((t,i) =>
+    `<div class="tag">${t}<span class="tag-remove" onclick="removeTag('${id}','connections',${i})">✕</span></div>`
+  ).join('');
+
+  // Session log
+  const logHtml = (e.sessionLog||[]).map((s,i) => `
+    <div class="session-entry">
+      <div class="session-week-tag">WK ${s.week}</div>
+      <div class="session-text">${s.text}</div>
+      <button class="btn small danger" onclick="removeLog('${id}',${i})">✕</button>
+    </div>`).join('');
+
+  // NPC meters (for npc/conspiracy categories)
+  let metersHtml = '';
+  if (cat === 'npc' || cat === 'conspiracy') {
+    const meters = e.meters || [];
+    const meterRows = meters.map((m,mi) => {
+      const val = m.value || 0;
+      let pips = '';
+      for (let p = 0; p < 5; p++) {
+        pips += `<div class="meter-pip ${p<val?'filled':''}" onclick="setMeter('${id}',${mi},${p+1})"></div>`;
+      }
+      const labels = ['Dormant','Peripheral','Suspicious','Convinced','Acting'];
+      return `<div class="npc-meter-row">
+        <input class="npc-meter-name" value="${m.name||''}"
+          onchange="updateMeter('${id}',${mi},'name',this.value)"
+          placeholder="NPC name...">
+        <div class="meter-track">${pips}</div>
+        <div class="meter-label">${labels[Math.max(0,val-1)]||'—'}</div>
+        <button class="btn small danger" onclick="removeMeter('${id}',${mi})">✕</button>
+      </div>`;
+    }).join('');
+
+    metersHtml = `
+      <div class="section">
+        <div class="section-title">NPC Awareness Meters
+          <span class="title-action" onclick="addMeter('${id}')">+ Add NPC</span>
+        </div>
+        <p style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim);margin-bottom:12px;letter-spacing:1px">
+          1=DORMANT · 2=PERIPHERAL · 3=SUSPICIOUS · 4=CONVINCED · 5=ACTING
+        </p>
+        ${meterRows || '<div style="color:var(--text-dim);font-size:13px">No NPC meters. Add one above.</div>'}
+      </div>`;
+  }
+
+  // Core phase display
+  let coreHtml = '';
+  if (cat === 'core' && id === 'core1') {
+    const phase = e.currentPhase || 0;
+    const phases = [
+      { name:'Phase 1 — Perfect Synchronization', desc:'Acts as one, no wasted motion. Unnerving efficiency. No tells.' },
+      { name:'Phase 2 — Adaptive Response', desc:'The Core has modeled the players\' specific decision patterns and uses them against them.' },
+      { name:'Phase 3 — System Corruption', desc:'HORUS-adjacent viral logic deployed against player mech NHP systems.' },
+      { name:'Phase 4 — Escalation', desc:'The Core pushes past its own safety parameters. It is no longer fully under control.' },
+    ];
+    coreHtml = `
+      <div class="section">
+        <div class="section-title">Grand Final Phases</div>
+        ${phases.map((p,i) => `
+          <div class="core-phase ${phase===i+1?'active':''}">
+            <div class="core-phase-label">
+              Phase ${i+1}
+              ${phase===i+1?'<span class="phase-active-indicator"></span><span style="color:var(--purple)">ACTIVE</span>':''}
+            </div>
+            <div class="core-phase-name">${p.name}</div>
+            <div class="core-phase-desc">${p.desc}</div>
+            <button class="btn small ${phase===i+1?'danger':'purple'}"
+              onclick="setPhase('${id}',${phase===i+1?0:i+1})">
+              ${phase===i+1?'Deactivate':'Set Active'}
+            </button>
+          </div>`).join('')}
+      </div>`;
+  }
+
+  document.getElementById('entry-detail').innerHTML = `
+    <div class="entry-header">
+      <div class="entry-header-row">
+        <span class="entry-category-badge ${badgeClass}">${catLabel}</span>
+        <input class="entry-name-input" value="${e.name||''}"
+          onchange="updateField('${id}','name',this.value)"
+          placeholder="Entry name...">
+        <button class="delete-entry-btn" onclick="deleteEntry('${id}')">Delete</button>
+      </div>
+      <div class="status-row" style="margin-top:12px">
+        <span class="status-label">STATUS</span>
+        <select class="status-select" onchange="updateField('${id}','status',this.value)"
+          style="color:${statusColor}">
+          ${statusOpts}
+        </select>
+      </div>
+    </div>
+
+    ${eventWeekHtml}
+
+    ${showClock ? `<div class="section"><div class="section-title">Progress Clock</div>${clockHtml}</div>` : ''}
+
+    ${metersHtml}
+
+    ${cat === 'npc' || cat === 'conspiracy' || cat === 'faction' ? `
+    <div class="section">
+      <div class="section-title">Investigators / Who's Watching</div>
+      <div class="tag-list">${invTags}</div>
+      <div class="tag-input-row">
+        <input type="text" class="tag-input" id="inv-input-${id}" placeholder="Add investigator..."
+          onkeydown="if(event.key==='Enter')addTag('${id}','investigators','inv-input-${id}')">
+        <button class="btn small" onclick="addTag('${id}','investigators','inv-input-${id}')">Add</button>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">Connections / Linked Elements</div>
+      <div class="tag-list">${conTags}</div>
+      <div class="tag-input-row">
+        <input type="text" class="tag-input" id="con-input-${id}" placeholder="Add connection..."
+          onkeydown="if(event.key==='Enter')addTag('${id}','connections','con-input-${id}')">
+        <button class="btn small" onclick="addTag('${id}','connections','con-input-${id}')">Add</button>
+      </div>
+    </div>` : ''}
+
+    <div class="section">
+      <div class="section-title">Notes</div>
+      <textarea class="notes-area" placeholder="GM notes, current state, discovery paths, NPC knowledge levels..."
+        onchange="updateField('${id}','notes',this.value)">${e.notes||''}</textarea>
+    </div>
+
+    ${coreHtml}
+
+    <div class="section">
+      <div class="section-title">Session Log
+        <span class="title-action" onclick="focusLogInput('${id}')">+ Add Entry</span>
+      </div>
+      <div id="log-list-${id}">${logHtml || '<div style="color:var(--text-dim);font-size:13px">No session entries yet.</div>'}</div>
+      <div class="add-session-row" style="margin-top:12px">
+        <textarea class="notes-area small" id="log-input-${id}"
+          placeholder="What happened this session related to this thread..."
+          style="flex:1"></textarea>
+        <button class="btn primary" onclick="addLog('${id}')" style="align-self:flex-end">Log Week ${state.week}</button>
+      </div>
+    </div>
+
+    ${renderLinksSection(id)}
+  `;
+}
+
+// ════════════════════════════════════════════
+//  DATA MANIPULATION
+// ════════════════════════════════════════════
+
+function updateField(id, field, value) {
+  state.entries[id][field] = value;
+  save();
+  renderSidebar();
+}
+
+function toggleWsClock(id, segIndex) {
+  const e = state.entries[id];
+  if (!e.progress) return;
+  const current = Math.round(e.progress.filled || 0);
+  const clickedFilled = segIndex < current;
+  e.progress.filled = clickedFilled ? segIndex : segIndex + 1;
+  save();
+  runAutoCascades();
+  runPassiveChecks();
+  save();
+  renderEntry(id);
+  renderSidebar();
+  renderAlertBanner();
+}
+
+function resizeClock(id) {
+  const e = state.entries[id];
+  const current = e.progress?.total || 8;
+  const sizes = [4, 6, 8, 10, 12];
+  const next = sizes[(sizes.indexOf(current) + 1) % sizes.length];
+  e.progress.total = next;
+  e.progress.filled = Math.min(e.progress.filled || 0, next);
+  save();
+  renderEntry(id);
+}
+
+function setPhase(id, phase) {
+  state.entries[id].currentPhase = phase;
+  save();
+  renderEntry(id);
+}
+
+function markEventDone(id) {
+  state.entries[id].status = 'resolved';
+  save();
+  renderEntry(id);
+  renderSidebar();
+}
+
+// Tags
+function addTag(id, field, inputId) {
+  const val = document.getElementById(inputId)?.value?.trim();
+  if (!val) return;
+  if (!state.entries[id][field]) state.entries[id][field] = [];
+  state.entries[id][field].push(val);
+  document.getElementById(inputId).value = '';
+  save();
+  renderEntry(id);
+}
+
+function removeTag(id, field, index) {
+  state.entries[id][field].splice(index, 1);
+  save();
+  renderEntry(id);
+}
+
+// NPC Meters
+function addMeter(id) {
+  if (!state.entries[id].meters) state.entries[id].meters = [];
+  state.entries[id].meters.push({ name: '', value: 0 });
+  save();
+  renderEntry(id);
+}
+
+function removeMeter(id, mi) {
+  state.entries[id].meters.splice(mi, 1);
+  save();
+  renderEntry(id);
+}
+
+function setMeter(id, mi, val) {
+  const current = state.entries[id].meters[mi].value;
+  // Click same pip = toggle off
+  state.entries[id].meters[mi].value = current === val ? val - 1 : val;
+  save();
+  renderEntry(id);
+}
+
+function updateMeter(id, mi, field, val) {
+  state.entries[id].meters[mi][field] = val;
+  save();
+}
+
+// Session log
+function focusLogInput(id) {
+  document.getElementById(`log-input-${id}`)?.focus();
+}
+
+function addLog(id) {
+  const input = document.getElementById(`log-input-${id}`);
+  const text = input?.value?.trim();
+  if (!text) return;
+  if (!state.entries[id].sessionLog) state.entries[id].sessionLog = [];
+  state.entries[id].sessionLog.unshift({ week: state.week, text });
+  input.value = '';
+  save();
+  renderEntry(id);
+}
+
+function removeLog(id, index) {
+  state.entries[id].sessionLog.splice(index, 1);
+  save();
+  renderEntry(id);
+}
+
+// Add new entry
+function addEntry(category) {
+  const id = `${category[0]}${Date.now()}`;
+  state.entries[id] = {
+    id, category,
+    name: '',
+    status: 'dormant',
+    progress: { total: 6, filled: 0 },
+    progressLabel: 'Progress',
+    investigators: [],
+    connections: [],
+    notes: '',
+    sessionLog: [],
+    scheduledWeek: category === 'event' ? state.week + 2 : undefined,
+  };
+  save();
+  renderSidebar();
+  selectEntry(id);
+}
+
+function deleteEntry(id) {
+  if (!confirm('Delete this entry? This cannot be undone.')) return;
+  delete state.entries[id];
+  state.selectedId = null;
+  document.getElementById('empty-state').style.display = '';
+  document.getElementById('entry-detail').style.display = 'none';
+  save();
+  renderSidebar();
+}
+
+// Export
+function exportData() {
+  const data = JSON.stringify(state, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `agca_world_week${state.week}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Reset
+function resetAll() {
+  if (!confirm('Reset ALL data in both trackers? This wipes every clock, flag, world state entry, and cascade back to defaults. This cannot be undone.')) return;
+  localStorage.removeItem('agca_tracker_v2');
+  localStorage.removeItem('agca_tracker_v3');
+  localStorage.removeItem('agca_world_v2');
+  localStorage.removeItem('agca_shared');
+  location.reload();
+}
+
+// ════════════════════════════════════════════
+//  CASCADE ENGINE
+// ════════════════════════════════════════════
+
+// Helper: safely get a clock's fill fraction for an entry
+function getFrac(id) {
+  const e = state.entries[id];
+  if (!e || !e.progress) return 0;
+  return (e.progress.filled || 0) / (e.progress.total || 1);
+}
+
+// Helper: advance a clock by N, capped at total, returns true if actually changed
+function advanceClock(id, amount, reason) {
+  const e = state.entries[id];
+  if (!e || !e.progress) return false;
+  const before = e.progress.filled;
+  e.progress.filled = Math.min(e.progress.total, (e.progress.filled || 0) + amount);
+  if (e.progress.filled !== before) {
+    queueAlert('cascade', `<strong>${e.name}</strong> advanced by ${amount} (${e.progress.filled}/${e.progress.total}) — <em>${reason}</em>`, id);
+    return true;
+  }
+  return false;
+}
+
+// Helper: queue a passive alert
+function queueAlert(type, message, entryId) {
+  state.pendingAlerts.push({ type, message, entryId, id: Date.now().toString() + Math.random() });
+}
+
+// ── SYNC FROM TEAM TRACKER ──
+function syncFromTeamTracker() {
+  let shared;
+  try {
+    shared = JSON.parse(localStorage.getItem('agca_shared') || '{}');
+  } catch(e) { return 0; }
+
+  // Also pull match data from tracker v3 if available
+  try {
+    const v3 = JSON.parse(localStorage.getItem('agca_tracker_v3') || '{}');
+    const v3Matches = (v3.challengeLog ? v3.challengeLog.length : 0) +
+      (v3.bracket && v3.bracket.matches ? v3.bracket.matches.filter(m => m.winner).length : 0);
+    if (v3Matches > (shared.totalMatches || 0)) shared.totalMatches = v3Matches;
+  } catch(e) {}
+
+  const currentMatches   = shared.totalMatches   || 0;
+  const currentVanguard  = shared.vanguardBriefingsDone || 0;
+  const newMatches       = Math.max(0, currentMatches  - (state.syncState.lastMatchCount  || 0));
+  const newVanguard      = Math.max(0, currentVanguard - (state.syncState.lastVanguardCount || 0));
+
+  let changed = false;
+
+  // Each new match advances Core Training by 1
+  if (newMatches > 0) {
+    const advanced = advanceClock('core1', newMatches,
+      `${newMatches} new Invitational/Challenge match${newMatches > 1 ? 'es' : ''} logged`);
+    if (advanced) changed = true;
+    state.syncState.lastMatchCount = currentMatches;
+  }
+
+  // Each new Vanguard briefing advances Core Training +1 and Vanguard Program +1
+  if (newVanguard > 0) {
+    advanceClock('core1', newVanguard, `${newVanguard} Vanguard briefing${newVanguard>1?'s':''} completed`);
+    advanceClock('core2', newVanguard, `${newVanguard} Vanguard briefing${newVanguard>1?'s':''} completed`);
+    state.syncState.lastVanguardCount = currentVanguard;
+    changed = true;
+  }
+
+  return newMatches + newVanguard; // total new events
+}
+
+// ── AUTOMATIC CASCADES ──
+function runAutoCascades() {
+  let anyChanged = true;
+  let passes = 0;
+
+  // Run multiple passes until stable (handles chain reactions)
+  while (anyChanged && passes < 5) {
+    anyChanged = false;
+    passes++;
+
+    // ① BK Investigation → Lev Exposure
+    const bkFrac = getFrac('n1');
+    const levFrac = getFrac('c3');
+    if (bkFrac >= 0.5 && levFrac < 0.4) {
+      if (advanceClock('c3', 1, 'BK Investigation crossed 50% threshold')) anyChanged = true;
+    }
+    if (bkFrac >= 0.75 && levFrac < 0.6) {
+      if (advanceClock('c3', 1, 'BK Investigation crossed 75% threshold')) anyChanged = true;
+    }
+
+    // ② Lev Exposure → Angels Cheating Discovery
+    const levFrac2 = getFrac('c3');
+    const angelsFrac = getFrac('c1');
+    if (levFrac2 >= 0.8 && angelsFrac < 0.7) {
+      if (advanceClock('c1', 2, 'Lev Okafor highly exposed — Angels\' program at risk')) anyChanged = true;
+    }
+  }
+}
+
+// ── PASSIVE ALERT CHECKS ──
+function runPassiveChecks() {
+  // Clear old auto-generated passive alerts (keep manual ones)
+  state.pendingAlerts = state.pendingAlerts.filter(a => a.type === 'manual');
+
+  // ① Prophet + BK both above 50% → Chimera converging
+  const prophetFrac = getFrac('n2');
+  const bkFrac = getFrac('n1');
+  if (prophetFrac >= 0.5 && bkFrac >= 0.5) {
+    queueAlert('passive',
+      '⚡ <strong>Threads Converging:</strong> BK Investigation and Prophet\'s Anomaly are both past 50%. Consider advancing Chimera discovery clock.',
+      'c2');
+  }
+
+  // ② Voss readiness at 4/5 pips → potential ally
+  const vossEntry = state.entries['n5'];
+  if (vossEntry?.meters?.[0]?.value >= 4) {
+    queueAlert('passive',
+      '⚡ <strong>Voss at Convinced:</strong> Readiness meter at 4+. He may act as a player ally if approached directly.',
+      'n5');
+  }
+
+  // ③ Angels cheating filled → match record suspect
+  if (getFrac('c1') >= 1.0) {
+    queueAlert('passive',
+      '⚡ <strong>Angels Exposed:</strong> Cheating program discovered. Their Invitational record is now credibly challengeable.',
+      'c1');
+  }
+
+  // ④ Core training at 75% → Grand Final approaching
+  if (getFrac('core1') >= 0.75) {
+    queueAlert('passive',
+      '⚡ <strong>Core Approaching Readiness:</strong> Training at 75%+. Consider scheduling the Grand Final event week.',
+      'core1');
+  }
+
+  // ⑤ Core training filled → ready
+  if (getFrac('core1') >= 1.0) {
+    queueAlert('passive',
+      '🔴 <strong>Core Training Complete:</strong> The Nexus Squadron is ready. Grand Final can be triggered.',
+      'core1');
+  }
+
+  // ⑥ Overdue events
+  Object.values(state.entries).forEach(e => {
+    if (e.category === 'event' && e.status === 'active' && e.scheduledWeek > 0) {
+      const diff = e.scheduledWeek - state.week;
+      if (diff < 0) {
+        queueAlert('passive',
+          `⚠ <strong>Overdue Event:</strong> "${e.name}" was scheduled for Week ${e.scheduledWeek} (${Math.abs(diff)} week${Math.abs(diff)>1?'s':''} ago).`,
+          e.id);
+      }
+    }
+  });
+
+  // ⑦ User-defined links
+  (state.userLinks || []).forEach(link => {
+    const src = state.entries[link.sourceId];
+    const tgt = state.entries[link.targetId];
+    if (!src || !tgt) return;
+    const srcFrac = getFrac(link.sourceId);
+    if (srcFrac >= link.triggerPct / 100) {
+      if (link.effectType === 'advance') {
+        advanceClock(link.targetId, link.effectAmount,
+          `Linked from "${src.name}" (${Math.round(srcFrac*100)}% threshold)`);
+      } else {
+        queueAlert('passive',
+          `⚡ <strong>Link triggered:</strong> "${src.name}" reached ${link.triggerPct}% — check "${tgt.name}".`,
+          link.targetId);
+      }
+    }
+  });
+}
+
+// ── VANGUARD BRIEFING DONE (called from markEventDone for event e1) ──
+function onVanguardBriefingDone() {
+  // Write to shared so Team Tracker knows count
+  try {
+    const shared = JSON.parse(localStorage.getItem('agca_shared') || '{}');
+    shared.vanguardBriefingsDone = (shared.vanguardBriefingsDone || 0) + 1;
+    localStorage.setItem('agca_shared', JSON.stringify(shared));
+    state.syncState.lastVanguardCount = shared.vanguardBriefingsDone;
+  } catch(e) {}
+
+  // Advance clocks directly
+  advanceClock('core1', 1, 'Vanguard briefing completed');
+  advanceClock('core2', 1, 'Vanguard briefing completed');
+
+  // Schedule next briefing in 3 weeks
+  if (state.entries['e1']) {
+    state.entries['e1'].status = 'active';
+    state.entries['e1'].scheduledWeek = state.week + 3;
+  }
+}
+
+// ── FULL RUN ──
+function runAllCascades() {
+  const newEvents = syncFromTeamTracker();
+  runAutoCascades();
+  runPassiveChecks();
+  save();
+  return newEvents;
+}
+
+// ── ALERT BANNER ──
+function renderAlertBanner() {
+  let banner = document.getElementById('alert-banner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'alert-banner';
+    banner.style.cssText = `
+      position:fixed; bottom:16px; right:16px; z-index:2000;
+      display:flex; flex-direction:column; gap:8px; max-width:380px;
+    `;
+    document.body.appendChild(banner);
+  }
+
+  // Only show newest alerts (max 5), deduplicated by message
+  const seen = new Set();
+  const unique = state.pendingAlerts.filter(a => {
+    if (seen.has(a.message)) return false;
+    seen.add(a.message);
+    return true;
+  }).slice(0, 5);
+
+  if (!unique.length) { banner.innerHTML = ''; return; }
+
+  banner.innerHTML = unique.map(alert => `
+    <div style="
+      background:var(--surface2);
+      border:1px solid ${alert.type==='cascade'?'var(--purple)':alert.message.includes('🔴')?'var(--red)':'var(--amber)'};
+      border-radius:4px; padding:10px 14px;
+      font-size:12px; line-height:1.5;
+      box-shadow:0 4px 20px rgba(0,0,0,0.4);
+      display:flex; gap:10px; align-items:flex-start;
+    ">
+      <div style="flex:1">${alert.message}</div>
+      <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+        ${alert.entryId ? `<button onclick="selectEntry('${alert.entryId}');dismissAlert('${alert.id}')"
+          style="font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;
+          background:rgba(79,195,200,0.1);border:1px solid var(--teal-dim);color:var(--teal);
+          padding:2px 6px;border-radius:2px;cursor:pointer">View</button>` : ''}
+        <button onclick="dismissAlert('${alert.id}')"
+          style="font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;
+          background:transparent;border:1px solid var(--border);color:var(--text-dim);
+          padding:2px 6px;border-radius:2px;cursor:pointer">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function dismissAlert(alertId) {
+  state.pendingAlerts = state.pendingAlerts.filter(a => a.id !== alertId);
+  save();
+  renderAlertBanner();
+}
+
+function dismissAllAlerts() {
+  state.pendingAlerts = state.pendingAlerts.filter(a => a.type === 'manual');
+  save();
+  renderAlertBanner();
+}
+
+// ── MANUAL ALERT ──
+function addManualAlert(message) {
+  queueAlert('manual', message, null);
+  save();
+  renderAlertBanner();
+}
+
+// ── LINK MANAGEMENT ──
+function addUserLink(sourceId, targetId, triggerPct, effectType, effectAmount) {
+  state.userLinks.push({
+    id: Date.now().toString(),
+    sourceId, targetId,
+    triggerPct: parseInt(triggerPct) || 50,
+    effectType: effectType || 'alert',
+    effectAmount: parseInt(effectAmount) || 1,
+  });
+  save();
+}
+
+function removeUserLink(linkId) {
+  state.userLinks = state.userLinks.filter(l => l.id !== linkId);
+  save();
+}
+
+// ════════════════════════════════════════════
+//  OVERRIDE markEventDone TO HANDLE VANGUARD
+// ════════════════════════════════════════════
+
+function markEventDone(id) {
+  state.entries[id].status = 'resolved';
+
+  // Special handling for Vanguard briefing
+  if (id === 'e1') onVanguardBriefingDone();
+
+  save();
+  runAllCascades();
+  renderEntry(id);
+  renderSidebar();
+  renderAlertBanner();
+}
+
+// ════════════════════════════════════════════
+//  LINKS UI (added to entry detail)
+// ════════════════════════════════════════════
+
+function renderLinksSection(entryId) {
+  const myLinks = (state.userLinks || []).filter(l => l.sourceId === entryId || l.targetId === entryId);
+  const allEntries = Object.values(state.entries).filter(e => e.id !== entryId);
+  const opts = allEntries.map(e => `<option value="${e.id}">${e.name || 'Unnamed'}</option>`).join('');
+
+  const linkRows = myLinks.map(l => {
+    const src = state.entries[l.sourceId];
+    const tgt = state.entries[l.targetId];
+    const dir = l.sourceId === entryId ? `→ ${tgt?.name||'?'}` : `← ${src?.name||'?'}`;
+    return `<div class="tag">
+      ${dir} at ${l.triggerPct}% → ${l.effectType==='advance'?`advance by ${l.effectAmount}`:'alert'}
+      <span class="tag-remove" onclick="removeUserLink('${l.id}');renderEntry('${entryId}')">✕</span>
+    </div>`;
+  }).join('');
+
+  return `
+    <div class="section">
+      <div class="section-title">Custom Links</div>
+      <p style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim);margin-bottom:12px;letter-spacing:1px">
+        Define cascade relationships. When this entry's clock reaches the trigger %, fire the effect on the target.
+      </p>
+      <div class="tag-list">${linkRows || '<div style="color:var(--text-dim);font-size:13px">No custom links.</div>'}</div>
+      <div style="display:grid;grid-template-columns:1fr 60px 80px 80px auto;gap:6px;margin-top:10px;align-items:center">
+        <select class="text-input" id="link-target-${entryId}" style="font-size:12px">
+          <option value="">Target entry...</option>
+          ${opts}
+        </select>
+        <input type="number" class="text-input" id="link-pct-${entryId}" placeholder="%" value="50" min="1" max="100" style="font-size:12px;text-align:center">
+        <select class="text-input" id="link-effect-${entryId}" style="font-size:12px">
+          <option value="alert">Alert</option>
+          <option value="advance">Advance</option>
+        </select>
+        <input type="number" class="text-input" id="link-amount-${entryId}" placeholder="Amt" value="1" min="1" style="font-size:12px;text-align:center">
+        <button class="btn small primary" onclick="
+          addUserLink('${entryId}',
+            document.getElementById('link-target-${entryId}').value,
+            document.getElementById('link-pct-${entryId}').value,
+            document.getElementById('link-effect-${entryId}').value,
+            document.getElementById('link-amount-${entryId}').value);
+          renderEntry('${entryId}')">Link</button>
+      </div>
+    </div>`;
+}
+
+// ════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════
+
+function init() {
+  load();
+  document.getElementById('week-label').textContent = `WEEK ${state.week}`;
+
+  // Sync and cascade on every load
+  const newEvents = runAllCascades();
+
+  renderSidebar();
+  renderAlertBanner();
+
+  // Show sync report if anything changed
+  if (newEvents > 0) {
+    queueAlert('cascade',
+      `🔄 <strong>Sync complete:</strong> ${newEvents} new match event${newEvents>1?'s':''} detected from Team Tracker. Cascades applied.`,
+      'core1');
+    renderAlertBanner();
+  }
+}
+
+init();
+</script>
+</body>
+</html>
